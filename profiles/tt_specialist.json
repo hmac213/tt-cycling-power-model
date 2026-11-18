@@ -1,0 +1,15 @@
+{
+  "name": "TT specialist",
+  "description": "Big, powerful rider in a very aerodynamic time-trial position.",
+  "rider_mass_kg": 74.0,
+  "bike_mass_kg": 9.0,
+  "cda_m2": 0.19,
+  "crr": 0.003,
+  "power": {
+    "cp_w": 410.0,
+    "w_prime_j": 22000.0,
+    "p_max_w": 1300.0,
+    "recovery_alpha": 1.0,
+    "recovery_beta": 1.0
+  }
+}

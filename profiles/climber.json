@@ -1,0 +1,15 @@
+{
+  "name": "Climbing specialist",
+  "description": "Light rider with a high power-to-weight ratio and a less aerodynamic position.",
+  "rider_mass_kg": 58.0,
+  "bike_mass_kg": 7.0,
+  "cda_m2": 0.24,
+  "crr": 0.003,
+  "power": {
+    "cp_w": 350.0,
+    "w_prime_j": 15000.0,
+    "p_max_w": 900.0,
+    "recovery_alpha": 1.0,
+    "recovery_beta": 1.0
+  }
+}

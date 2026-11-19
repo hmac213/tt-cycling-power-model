@@ -151,6 +151,23 @@ power. On a steady climb there is almost nothing to gain, since constant
 power is already close to optimal there. The TT specialist wins everywhere
 except the steep climb.
 
+## Sensitivity to the recovery exponent β
+
+β is a placeholder, so we varied it on `hill.gpx` (TT specialist, dynamic
+program only, no polish):
+
+| β | Constant power | Optimal | Time saved |
+| --- | --- | --- | --- |
+| 0.5 | 11:47.2 | 11:35.2 | 12.1 s |
+| 1 | 11:47.2 | 11:35.6 | 11.7 s |
+| 2 | 11:47.2 | 11:35.9 | 11.3 s |
+
+The time saved changes by only ±0.4 s over a 4× range of β, so the main
+result does not depend on this uncertain parameter. Larger β slows recovery,
+since (1 − B/W′)^β shrinks as β grows when B < W′, which slightly reduces the
+benefit of recovering on the descent. The constant-power ride never drops
+below CP, so it never recovers and β does not affect it.
+
 ## Known limits
 
 - $C_dA$, $\rho$, and $C_{rr}$ do not vary with position, altitude, or speed.

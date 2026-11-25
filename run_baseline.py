@@ -84,6 +84,14 @@ def _parse_args() -> argparse.Namespace:
         "--step", type=float, default=config.step_length,
         help="length of one grid step [m]",
     )
+    parser.add_argument(
+        "--rho", type=float, default=physics.rho,
+        help="air density [kg/m^3]; about 1.15 for Tokyo (Fuji), 1.20 for Flanders",
+    )
+    parser.add_argument(
+        "--efficiency", type=float, default=physics.drivetrain_efficiency,
+        help="drivetrain efficiency eta [-] (Martin et al. 1998: 0.977)",
+    )
     parser.add_argument("--mu-corner", type=float, default=physics.mu_corner)
     parser.add_argument(
         "--brake-decel", type=float, default=physics.brake_decel
@@ -308,7 +316,10 @@ def main() -> None:
     profile = rider_profiles.load(args.profile)
     physics = profile.physics_params(
         physics_params.PhysicsParams(
-            mu_corner=args.mu_corner, brake_decel=args.brake_decel
+            mu_corner=args.mu_corner,
+            brake_decel=args.brake_decel,
+            rho=args.rho,
+            drivetrain_efficiency=args.efficiency,
         )
     )
     rider = profile.rider_params()

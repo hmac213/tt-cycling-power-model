@@ -332,7 +332,7 @@ def advance(
     free_speed = to_speed(trajectory[-1])
     trajectory[-1] = free_speed**3
     end_speed = np.minimum(free_speed, grid.speed_cap[index])
-    brake_energy = 0.5 * physics.mass * (free_speed**2 - end_speed**2)
+    brake_energy = 0.5 * physics.effective_mass * (free_speed**2 - end_speed**2)
     speeds = braked_speeds(speed, trajectory, end_speed, to_speed)
     return end_speed, step_duration(speeds, grid.step), brake_energy
 

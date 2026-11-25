@@ -24,6 +24,9 @@ $$m \frac{dv_b}{dt} = \frac{P}{v_b} - \tfrac12 \rho\, C_dA\, (v_b + v_\text{wind
 | $C_{rr}$ | `crr` | Rolling resistance coefficient | – | 0.004 |
 | $\mu$ | `mu_corner` | Usable lateral grip (max cornering acceleration / $g$) | – | 0.5 |
 | $a_\text{brake}$ | `brake_decel` | Largest deceleration from the brakes alone | m/s² | 3.0 |
+| $\eta$ | `drivetrain_efficiency` | Share of pedal power reaching the wheel (Martin et al. 1998) | – | 0.977 |
+| $I$ | `wheel_inertia` | Moment of inertia of both wheels (Martin et al. 1998) | kg m² | 0.14 |
+| $r$ | `wheel_radius` | Outside tyre radius (Martin et al. 1998) | m | 0.311 |
 
 The defaults are a generic rider. A rider profile (`profiles/`) overrides
 $m$, $C_dA$, and $C_{rr}$ and leaves the rest alone.
@@ -87,10 +90,13 @@ heat, so the optimizer coasts wherever the reserve is worth more than the time.
 
 - **Sign of the wind.** $v_\text{wind} > 0$ is a headwind. The $x\lvert x\rvert$ form
   means a tailwind faster than the rider pushes them forward, as it should.
-- **Drivetrain efficiency.** Not in the write-up. $P$ is taken as power at the
-  wheel (efficiency 1). To model pedal power, scale $P$ by about 0.97.
-- **Rotational inertia of the wheels.** Ignored. It would add roughly 1–2% to
-  the effective mass in the $m\, dv/dt$ term only.
+- **Drivetrain efficiency.** $P$ is the rider's pedal power and only $\eta P$
+  reaches the wheel, with $\eta = 0.977$ (a 2.3% chain loss, Martin et al.
+  1998, *J. Appl. Biomech.* 14(3):276–291). See `DECISIONS.md`.
+- **Rotational inertia of the wheels.** Folded into an effective mass
+  $m_\text{eff} = m + I/r^2$ with $I = 0.14$ kg m² and $r = 0.311$ m (Martin
+  et al. 1998), which adds 1.45 kg in the $m\, dv/dt$ term only. Gravity and
+  rolling resistance still use $m$.
 - **Cornering was assumed away in the write-up** ("continuous, obstacle-free
   track", "braking force ignored"). Both are now relaxed as described above.
 - **Grip and braking values.** $\mu = 0.5$ and $a_\text{brake} = 3$ m/s² are

@@ -104,7 +104,7 @@ def acceleration(
 
     Args:
         speed: Bike speed [m/s]; must be nonzero.
-        power: Mechanical power at the wheel [W].
+        power: Rider's pedal power [W]; eta * power reaches the wheel.
         theta: Road incline angle [rad].
         headwind: Wind speed opposing the rider [m/s].
         physics: Physical parameters.
@@ -112,9 +112,9 @@ def acceleration(
     Returns:
         Acceleration [m/s^2].
     """
-    drive = power / speed
+    drive = physics.drivetrain_efficiency * power / speed
     resistance = resistive_force(speed, theta, headwind, physics)
-    return (drive - resistance) / physics.mass
+    return (drive - resistance) / physics.effective_mass
 
 
 def speed_cubed_rate(
@@ -126,15 +126,18 @@ def speed_cubed_rate(
 ) -> np.ndarray:
     """Computes d(v^3)/ds, the equation of motion in distance form.
 
-    Since m v^2 dv/ds = P - v F_res, the state z = v^3 obeys
+    Since m_eff v^2 dv/ds = eta P - v F_res, the state z = v^3 obeys
 
-        dz/ds = (3 / m) (P - v F_res(v)),
+        dz/ds = (3 / m_eff) (eta P - v F_res(v)),
+
+    with eta the drivetrain efficiency and m_eff = m + I / r^2 the mass
+    including the wheels' rotational inertia.
 
     which has no singularity at v = 0, so a standing start is well posed.
 
     Args:
         speed: Bike speed [m/s].
-        power: Mechanical power at the wheel [W].
+        power: Rider's pedal power [W]; eta * power reaches the wheel.
         theta: Road incline angle [rad].
         headwind: Wind speed opposing the rider [m/s].
         physics: Physical parameters.
@@ -143,7 +146,10 @@ def speed_cubed_rate(
         d(v^3)/ds [m^2/s^3].
     """
     resistance = resistive_force(speed, theta, headwind, physics)
-    return 3.0 / physics.mass * (power - speed * resistance)
+    return (
+        3.0 / physics.effective_mass
+        * (physics.drivetrain_efficiency * power - speed * resistance)
+    )
 
 
 def steady_state_speed(
@@ -156,7 +162,7 @@ def steady_state_speed(
     """Finds the speed at which the forces balance.
 
     Args:
-        power: Constant mechanical power [W].
+        power: Constant pedal power [W].
         theta: Constant road incline angle [rad].
         headwind: Constant headwind [m/s].
         physics: Physical parameters.
@@ -168,6 +174,6 @@ def steady_state_speed(
 
     def surplus_power(speed: float) -> float:
         resistance = resistive_force(speed, theta, headwind, physics)
-        return power - speed * resistance
+        return physics.drivetrain_efficiency * power - speed * resistance
 
     return optimize.brentq(surplus_power, 1e-6, max_speed)

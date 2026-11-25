@@ -81,11 +81,14 @@ class SimulateTest(unittest.TestCase):
         self.assertAlmostEqual(coarse.total_time, fine.total_time, delta=0.01)
 
     def test_standing_start_matches_closed_form(self):
-        # Without resistance v^3 = 3 P s / m, so T = (3/2) L / v(L).
+        # Without resistance v^3 = 3 eta P s / m_eff, so T = (3/2) L / v(L).
         physics = physics_params.PhysicsParams(cda=0.0, crr=0.0)
         course = helpers.straight_course(1_000.0)
         ride = _constant_plan(course, 400.0, physics)
-        end_speed = (3 * 400.0 * course.length / physics.mass) ** (1 / 3)
+        end_speed = (
+            3 * physics.drivetrain_efficiency * 400.0 * course.length
+            / physics.effective_mass
+        ) ** (1 / 3)
         self.assertAlmostEqual(ride.speed[-1], end_speed, places=6)
         self.assertAlmostEqual(
             ride.total_time, 1.5 * course.length / end_speed, places=6
@@ -93,7 +96,8 @@ class SimulateTest(unittest.TestCase):
 
     def test_coasting_over_a_crest_conserves_energy(self):
         # No resistance and no power: the speed at the top of a 10 m crest
-        # follows from energy conservation alone.
+        # follows from energy conservation alone. The wheels' spin energy
+        # counts in the kinetic energy (m_eff), the climb only lifts m.
         physics = physics_params.PhysicsParams(cda=0.0, crr=0.0)
 
         def rise(north: np.ndarray) -> np.ndarray:
@@ -102,7 +106,9 @@ class SimulateTest(unittest.TestCase):
         course = helpers.straight_course(1_000.0, rise)
         config = simulate.SimConfig(initial_speed=20.0)
         ride = _constant_plan(course, 0.0, physics, config)
-        expected = np.sqrt(20.0**2 - 2 * physics.g * 10.0)
+        expected = np.sqrt(
+            20.0**2 - 2 * physics.mass * physics.g * 10.0 / physics.effective_mass
+        )
         self.assertAlmostEqual(ride.speed[-1], expected, places=3)
 
     def test_hard_deceleration_is_integrated_accurately(self):

@@ -31,6 +31,21 @@ class DynamicsTest(unittest.TestCase):
         rate = dynamics.speed_cubed_rate(speed, 350.0, 0.03, 1.0, _PHYSICS)
         self.assertAlmostEqual(float(rate), 3 * speed * float(accel))
 
+    def test_drivetrain_loss_and_wheel_inertia(self):
+        # Only eta P reaches the wheel, and the wheels add I / r^2 to the
+        # mass that is accelerated: 0.14 / 0.311^2 = 1.45 kg.
+        self.assertAlmostEqual(
+            _PHYSICS.effective_mass - _PHYSICS.mass, 0.14 / 0.311**2
+        )
+        ideal = physics_params.PhysicsParams(
+            drivetrain_efficiency=1.0, wheel_inertia=0.0
+        )
+        lossy = dynamics.steady_state_speed(300.0, 0.0, 0.0, _PHYSICS)
+        same = dynamics.steady_state_speed(
+            0.977 * 300.0, 0.0, 0.0, ideal
+        )
+        self.assertAlmostEqual(lossy, same, places=9)
+
 
 class CorneringTest(unittest.TestCase):
 

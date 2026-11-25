@@ -56,7 +56,7 @@ def speed_envelope(
     Marching backwards from the finish,
 
         V^2(s) = min(v_corner^2(s), V^2(s + ds) + 2 a(s) ds),
-        a = brake_decel + F_res(V, s) / m    (floored at 0),
+        a = brake_decel + F_res(V, s) / m_eff    (floored at 0),
 
     so V equals the corner limit inside corners and rises ahead of them as
     fast as full braking allows. Riding at or below V everywhere guarantees
@@ -87,7 +87,9 @@ def speed_envelope(
         resistance = aero_coeff * air_speed * abs(air_speed) + weight * (
             physics.crr * cos_theta[i] + sin_theta[i]
         )
-        decel = max(physics.brake_decel + resistance / physics.mass, 0.0)
+        decel = max(
+            physics.brake_decel + resistance / physics.effective_mass, 0.0
+        )
         step = distance[i + 1] - distance[i]
         speed_sq[i] = min(
             corner_speed_sq[i], speed_sq[i + 1] + 2.0 * decel * step

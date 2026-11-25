@@ -3,144 +3,144 @@
   "course": "flanders",
   "wind_speed": 3.0,
   "wind_from": 180,
-  "fixed_plan_time": 3149.7904557847655,
-  "exhausted_fraction": 0.0,
-  "reoptimized_time": 3142.389489623989
+  "fixed_plan_time": 3190.0085265686616,
+  "exhausted_fraction": 0.0018281535648994515,
+  "reoptimized_time": 3181.5886155878466
  },
  {
   "course": "flanders",
   "wind_speed": 3.0,
   "wind_from": 225,
-  "fixed_plan_time": 3129.5226473079533,
-  "exhausted_fraction": 0.0009229349330872173,
-  "reoptimized_time": 3126.7778623659665
+  "fixed_plan_time": 3168.3661222056717,
+  "exhausted_fraction": 0.0022851919561243145,
+  "reoptimized_time": 3165.721126145608
  },
  {
   "course": "flanders",
   "wind_speed": 3.0,
   "wind_from": 270,
-  "fixed_plan_time": 3032.083149892915,
-  "exhausted_fraction": 0.0018458698661744347,
-  "reoptimized_time": 3024.2553623292606
+  "fixed_plan_time": 3086.835644172734,
+  "exhausted_fraction": 0.0022851919561243145,
+  "reoptimized_time": 3076.786669216914
  },
  {
   "course": "flanders",
   "wind_speed": 4.0,
   "wind_from": 180,
-  "fixed_plan_time": 3223.264111131787,
-  "exhausted_fraction": 0.0,
-  "reoptimized_time": 3215.3475742214714
+  "fixed_plan_time": 3255.901668010123,
+  "exhausted_fraction": 0.0022851919561243145,
+  "reoptimized_time": 3246.0228356556822
  },
  {
   "course": "flanders",
   "wind_speed": 4.0,
   "wind_from": 225,
-  "fixed_plan_time": 3194.0061530483376,
+  "fixed_plan_time": 3222.450406178562,
   "exhausted_fraction": 0.0,
-  "reoptimized_time": 3194.0061530483376
+  "reoptimized_time": 3222.450406178562
  },
  {
   "course": "flanders",
   "wind_speed": 4.0,
   "wind_from": 270,
-  "fixed_plan_time": 3067.419857879764,
-  "exhausted_fraction": 0.003230272265805261,
-  "reoptimized_time": 3059.2849177463627
+  "fixed_plan_time": 3108.895793716109,
+  "exhausted_fraction": 0.003656307129798903,
+  "reoptimized_time": 3098.5555439319
  },
  {
   "course": "flanders",
   "wind_speed": 5.0,
   "wind_from": 180,
-  "fixed_plan_time": 3303.8157741416107,
-  "exhausted_fraction": 0.0,
-  "reoptimized_time": 3293.1066005613297
+  "fixed_plan_time": 3331.9760615682244,
+  "exhausted_fraction": 0.0013711151736745886,
+  "reoptimized_time": 3317.401243532099
  },
  {
   "course": "flanders",
   "wind_speed": 5.0,
   "wind_from": 225,
-  "fixed_plan_time": 3267.1306745729853,
-  "exhausted_fraction": 0.0023073373327180432,
-  "reoptimized_time": 3265.642058852073
+  "fixed_plan_time": 3288.209847339083,
+  "exhausted_fraction": 0.0022851919561243145,
+  "reoptimized_time": 3284.889972526862
  },
  {
   "course": "flanders",
   "wind_speed": 5.0,
   "wind_from": 270,
-  "fixed_plan_time": 3109.672954184938,
-  "exhausted_fraction": 0.004153207198892478,
-  "reoptimized_time": 3099.666167330071
+  "fixed_plan_time": 3134.6349456787148,
+  "exhausted_fraction": 0.004570383912248629,
+  "reoptimized_time": 3123.093739636635
  },
  {
   "course": "tokyo",
   "wind_speed": 3.0,
   "wind_from": 180,
-  "fixed_plan_time": 1957.7303671619643,
-  "exhausted_fraction": 0.0054249547920434,
-  "reoptimized_time": 1952.4595537520884
+  "fixed_plan_time": 1906.485603136571,
+  "exhausted_fraction": 0.0027272727272727275,
+  "reoptimized_time": 1894.3137655474677
  },
  {
   "course": "tokyo",
   "wind_speed": 3.0,
   "wind_from": 225,
-  "fixed_plan_time": 1937.192659968418,
-  "exhausted_fraction": 0.0027124773960217,
-  "reoptimized_time": 1935.1547707249383
+  "fixed_plan_time": 1931.6505260997446,
+  "exhausted_fraction": 0.005454545454545455,
+  "reoptimized_time": 1928.7329107750788
  },
  {
   "course": "tokyo",
   "wind_speed": 3.0,
   "wind_from": 270,
-  "fixed_plan_time": 1925.7824646694887,
-  "exhausted_fraction": 0.0027124773960217,
-  "reoptimized_time": 1913.7966437019538
+  "fixed_plan_time": 1950.263733035902,
+  "exhausted_fraction": 0.005454545454545455,
+  "reoptimized_time": 1944.115234190619
  },
  {
   "course": "tokyo",
   "wind_speed": 4.0,
   "wind_from": 180,
-  "fixed_plan_time": 1976.9747974344943,
-  "exhausted_fraction": 0.0045207956600361665,
-  "reoptimized_time": 1972.1800686340187
+  "fixed_plan_time": 1913.9468996536868,
+  "exhausted_fraction": 0.0018181818181818182,
+  "reoptimized_time": 1900.8409276396637
  },
  {
   "course": "tokyo",
   "wind_speed": 4.0,
   "wind_from": 225,
-  "fixed_plan_time": 1948.1908349795024,
+  "fixed_plan_time": 1948.6232916302188,
   "exhausted_fraction": 0.0,
-  "reoptimized_time": 1948.1908349795024
+  "reoptimized_time": 1948.6232916302188
  },
  {
   "course": "tokyo",
   "wind_speed": 4.0,
   "wind_from": 270,
-  "fixed_plan_time": 1930.4132482323391,
-  "exhausted_fraction": 0.0045207956600361665,
-  "reoptimized_time": 1919.742809951566
+  "fixed_plan_time": 1975.865729731904,
+  "exhausted_fraction": 0.00909090909090909,
+  "reoptimized_time": 1970.1799107031513
  },
  {
   "course": "tokyo",
   "wind_speed": 5.0,
   "wind_from": 180,
-  "fixed_plan_time": 2000.1530659376742,
-  "exhausted_fraction": 0.0045207956600361665,
-  "reoptimized_time": 1995.0686881736121
+  "fixed_plan_time": 1926.5519763897623,
+  "exhausted_fraction": 0.0027272727272727275,
+  "reoptimized_time": 1909.6832143814659
  },
  {
   "course": "tokyo",
   "wind_speed": 5.0,
   "wind_from": 225,
-  "fixed_plan_time": 1964.877528820617,
-  "exhausted_fraction": 0.0054249547920434,
-  "reoptimized_time": 1963.1410555032564
+  "fixed_plan_time": 1973.4980276906274,
+  "exhausted_fraction": 0.004545454545454545,
+  "reoptimized_time": 1971.587143134388
  },
  {
   "course": "tokyo",
   "wind_speed": 5.0,
   "wind_from": 270,
-  "fixed_plan_time": 1938.9865412026297,
-  "exhausted_fraction": 0.007233273056057866,
-  "reoptimized_time": 1927.5229250610087
+  "fixed_plan_time": 2005.7752483748372,
+  "exhausted_fraction": 0.01090909090909091,
+  "reoptimized_time": 1999.790830861788
  }
 ]

@@ -22,7 +22,7 @@ the rider's stamina (Critical Power / $W'$) dynamics.
 | `power_model/` | CP / $W'$ stamina model | [power_model/README.md](power_model/README.md) |
 | `profiles/` | Rider profiles (JSON): masses, $C_dA$, and power numbers | [profiles/README.md](profiles/README.md) |
 | `solver/` | Forward simulation and two-stage pacing optimization | [solver/README.md](solver/README.md) |
-| `courses/` | Demo GPX files, the reconstructed Tokyo and Flanders courses, our custom loop, and the scripts that generate them | |
+| `courses/` | The Tokyo and Flanders 2021 courses, our custom loop, synthetic demo courses, and the scripts that generate them | [courses/README.md](courses/README.md) |
 | `analysis/` | Experiments for the full problem statement (race courses, wind, power errors, fatigue) and their figures | |
 | `docs/` | Team time trial extension | [docs/team_time_trial.md](docs/team_time_trial.md) |
 | `tests/` | Sanity checks | |
@@ -176,7 +176,6 @@ The sections above cover the core model. This section covers every item
 the problem statement asks for. Reproduce it with
 
 ```bash
-python -m courses.make_race_gpx          # writes the race courses
 python analysis/run_analysis.py all      # about 40 min on 2 cores
 python analysis/plot_analysis.py         # figures in outputs/analysis/figures
 ```
@@ -186,7 +185,7 @@ A frozen copy of the summaries and figures is in `results/`.
 | Requirement | Where |
 | --- | --- |
 | Two rider types, one a TT specialist, and both genders | `profiles/`: `tt_specialist`, `climber`, `tt_specialist_women`, `climber_women` |
-| 2021 Olympic TT course, Tokyo | `courses/tokyo_2021_men.gpx` (44.2 km), `tokyo_2021_women.gpx` (22.1 km) |
+| 2021 Olympic TT course, Tokyo | `courses/tokyo_2021_men.gpx` (44 km), `tokyo_2021_women.gpx` (22 km) |
 | 2021 Worlds TT course, Flanders | `courses/flanders_2021_men.gpx` (43.3 km), `flanders_2021_women.gpx` (30.3 km) |
 | Own course: 4+ sharp turns, a real grade, finish near start | `courses/custom_loop.gpx` |
 | Limits on total energy, past aggressiveness, fatigue | W′ (past aggressiveness) plus CP decline over long races (`fatigue_rate`) |
@@ -199,13 +198,13 @@ polish), which changes times by about 0.1 s.
 
 ### Courses
 
-**Tokyo and Flanders are reconstructions, not surveyed tracks.** No GPX file
-of either course was available, so `courses/make_race_gpx.py` builds each
-from published facts: the lengths, the total climbing (Tokyo: 834 m modelled
-against 846 m published for the men), the order and size of the climbs, the
-start and finish, and realistic corner radii. The road layout itself is
-schematic. To use the real roads, put the official GPX file in `courses/`
-and load it; nothing else changes.
+**Tokyo and Flanders are the real routes**, user-made GPX files from
+RideWithGPS that match the official distances and start and finish points
+(sources and checks in [courses/README.md](courses/README.md)). Their
+elevation comes from a map elevation model, so they are loaded with
+`sigma_ele = 1.0` m. With that setting the model's climbing matches
+ProCyclingStats almost exactly: 747 m vs. 746 m for the men's Tokyo course
+and 379 m vs. 380 m for the women's.
 
 The custom loop is 12 km with seven corners of 80° or more (radius
 12–20 m), a 1.5 km climb that reaches 7%, and the finish line on the start
@@ -227,38 +226,48 @@ $P(t) = \min(CP + W'/t,\ P_\text{max})$.
 
 ### Results on the race courses
 
-Constant power, optimal, time saved; then the optimal time and saving with
-long-race fatigue on ($k = 0.07$, onset 30 min):
+Constant power, optimal, time saved, kinetic energy braked away; then the
+optimal time and saving with long-race fatigue on ($k = 0.07$, onset
+30 min):
 
-| Course | Rider | Constant | Optimal | Saved | With fatigue: optimal (saved) |
-| --- | --- | --- | --- | --- | --- |
-| Tokyo (44.2 km) | TT specialist | 59:43.0 | 57:37.4 | 125.6 s | 57:57.7 (129.7 s) |
-| Tokyo (44.2 km) | Climber | 63:43.5 | 62:19.3 | 84.2 s | 62:45.1 (96.4 s) |
-| Tokyo (22.1 km) | TT specialist (W) | 32:52.1 | 31:51.9 | 60.2 s | 31:51.9 (60.5 s) |
-| Tokyo (22.1 km) | Climber (W) | 34:24.9 | 33:40.1 | 44.8 s | 33:40.4 (45.1 s) |
-| Flanders (43.3 km) | TT specialist | 49:42.6 | 49:10.3 | 32.3 s | 49:17.5 (32.8 s) |
-| Flanders (43.3 km) | Climber | 55:50.7 | 55:31.5 | 19.1 s | 55:44.3 (19.2 s) |
-| Flanders (30.3 km) | TT specialist (W) | 37:54.7 | 37:31.3 | 23.4 s | 37:32.5 (23.6 s) |
-| Flanders (30.3 km) | Climber (W) | 41:29.0 | 41:14.2 | 14.8 s | 41:17.0 (14.9 s) |
-| Custom loop (12.0 km) | TT specialist | 15:21.8 | 14:49.8 | 32.1 s | – |
-| Custom loop (12.0 km) | Climber | 16:36.4 | 16:13.1 | 23.3 s | – |
-| Custom loop (12.0 km) | TT specialist (W) | 16:47.5 | 16:15.1 | 32.4 s | – |
-| Custom loop (12.0 km) | Climber (W) | 17:46.8 | 17:21.8 | 25.0 s | – |
+| Course | Rider | Constant | Optimal | Saved | Braked: constant → optimal | With fatigue: optimal (saved) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Tokyo (43.9 km) | TT specialist | 60:15.3 | 57:07.5 | 187.8 s | 270 → 116 kJ | 57:27.5 (191.1 s) |
+| Tokyo (43.9 km) | Climber | 63:58.6 | 61:35.8 | 142.8 s | 126 → 39 kJ | 62:00.0 (154.8 s) |
+| Tokyo (22.0 km) | TT specialist (W) | 32:53.3 | 31:27.7 | 85.6 s | 93 → 40 kJ | 31:27.7 (85.8 s) |
+| Tokyo (22.0 km) | Climber (W) | 34:16.5 | 33:08.7 | 67.8 s | 46 → 13 kJ | 33:08.9 (68.1 s) |
+| Flanders (43.7 km) | TT specialist | 51:47.1 | 50:27.8 | 79.3 s | 125 → 36 kJ | 50:35.8 (80.2 s) |
+| Flanders (43.7 km) | Climber | 57:29.0 | 56:32.6 | 56.5 s | 69 → 15 kJ | 56:45.9 (56.9 s) |
+| Flanders (30.3 km) | TT specialist (W) | 38:50.0 | 37:58.3 | 51.7 s | 60 → 15 kJ | 37:59.6 (51.9 s) |
+| Flanders (30.3 km) | Climber (W) | 42:07.6 | 41:29.3 | 38.3 s | 37 → 6 kJ | 41:32.1 (38.5 s) |
+| Custom loop (12.0 km) | TT specialist | 15:21.8 | 14:49.8 | 32.1 s | 55 → 30 kJ | – |
+| Custom loop (12.0 km) | Climber | 16:36.4 | 16:13.1 | 23.3 s | 27 → 11 kJ | – |
+| Custom loop (12.0 km) | TT specialist (W) | 16:47.5 | 16:15.1 | 32.4 s | 37 → 19 kJ | – |
+| Custom loop (12.0 km) | Climber (W) | 17:46.8 | 17:21.8 | 25.0 s | 20 → 9 kJ | – |
 
-**Check against the real races.** The model's TT specialists are 3–5.5% slower
-than the 2021 winners: Tokyo men 57:37 vs. Roglič's 55:04.19, Tokyo women
-31:52 vs. van Vleuten's 30:13.49, Flanders men 49:10 vs. Ganna's 47:47.83,
-Flanders women 37:31 vs. van Dijk's 36:05.28. That is about right for
-profiles a little below world-champion level, so the physics gives
-realistic speeds on both the flat and the hilly course.
+**Check against the real races.** The model's TT specialists are
+3.7–5.6% slower than the 2021 winners: Tokyo men
+57:07 vs. Roglič's 55:04.19,
+Tokyo women 31:27 vs.
+van Vleuten's 30:13.49, Flanders men
+50:27 vs. Ganna's 47:47.83,
+Flanders women 37:58
+vs. van Dijk's 36:05.28. That is about right for profiles a little below
+world-champion level, and the model is not tuned to these races.
 
-**Why Tokyo gains so much.** On the hilly Tokyo course, pacing saves 2.2–3.5%
-(up to 2 minutes), against 0.6–1.1% on flat Flanders. The optimal rider
-pushes hard on the two big climbs, coasts the long descents, where extra
-power buys almost no speed, and arrives at the corners at the bottom
-without braking away energy (68 kJ braked vs. 149 kJ at constant power).
-Part of that braking comes from the schematic corner placement, so treat
-the size of the Tokyo gain as an upper estimate.
+**Where the gain comes from.** Pacing saves 3.3–5.2% on
+Tokyo (up to 3 minutes) and
+1.5–2.6% on Flanders. Both real courses have far more tight
+corners than the synthetic ones: the motor circuit at Fuji and the town
+centres of Knokke and Bruges. A rider holding constant power pedals hard
+into every one of them and then brakes the energy away. The optimal rider
+eases off before each corner, sprints out of it, pushes on the climbs, and
+coasts the long descents. On the men's Tokyo course the TT specialist brakes
+away 116 kJ instead of
+270 kJ. Corner radii come
+from the GPX line, so a route drawn slightly off the real racing line would
+make some corners tighter than they are. Treat the corner share of the gain
+as an upper estimate.
 
 ### Fatigue: total energy and CP decline
 
@@ -275,15 +284,15 @@ effect on the men's Tokyo course (TT specialist):
 
 | $k$ | Constant | Optimal | Saved |
 | --- | --- | --- | --- |
-| 0 (off) | 59:43.0 | 57:37.4 | 125.6 s |
-| 0.035 | 59:55.0 | 57:47.5 | 127.5 s |
-| 0.07 | 60:07.4 | 57:57.7 | 129.7 s |
-| 0.14 | 61:06.0 | 58:19.1 | 166.9 s |
+| 0 (off) | 60:15.3 | 57:07.5 | 187.8 s |
+| 0.035 | 60:26.8 | 57:17.5 | 189.3 s |
+| 0.07 | 60:38.6 | 57:27.5 | 191.1 s |
+| 0.14 | 61:35.2 | 57:47.6 | 227.6 s |
 
 Fatigue barely matters below about 35 minutes (the women's courses). On the
-50–60-minute men's courses it costs 7–26 s (42 s at $k = 0.14$) and
-makes careful pacing slightly more valuable. It is off by default (`fatigue_rate = 0`), so the core
-results above are unchanged.
+50–65-minute men's courses it costs 8–24 s at
+$k = 0.07$ and makes careful pacing slightly more valuable. It is off by
+default (`fatigue_rate = 0`), so the core results above are unchanged.
 
 ### Weather
 
@@ -291,77 +300,79 @@ The wind blows uniformly from 8 directions at 2, 4, and 6 m/s, and the plan is
 re-optimized each time. The table shows the change in optimal time from a calm
 day, in seconds, by the direction the wind blows from:
 
-**Flanders, men's TT specialist (point to point; calm 49:10.3)**
+**Flanders, men's TT specialist (point to point; calm 50:27.8)**
 
 | Wind | N | NE | E | SE | S | SW | W | NW |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2 m/s | -107 | -99 | -25 | +67 | +124 | +114 | +44 | -47 |
-| 4 m/s | -200 | -184 | -32 | +156 | +265 | +244 | +109 | -74 |
-| 6 m/s | -280 | -259 | -22 | +267 | +425 | +392 | +195 | -80 |
+| 2 m/s | -72 | -67 | -19 | +50 | +96 | +87 | +30 | -35 |
+| 4 m/s | -121 | -115 | -27 | +115 | +218 | +195 | +71 | -55 |
+| 6 m/s | -149 | -145 | -24 | +198 | +368 | +326 | +123 | -61 |
 
-**Tokyo, women's TT specialist (loop; calm 31:51.9)**
+**Tokyo, women's TT specialist (loop; calm 31:27.7)**
 
 | Wind | N | NE | E | SE | S | SW | W | NW |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2 m/s | -10 | -1 | +12 | +24 | +24 | +13 | -1 | -10 |
-| 4 m/s | -4 | +10 | +35 | +60 | +60 | +36 | +8 | -6 |
-| 6 m/s | +14 | +32 | +70 | +109 | +109 | +69 | +26 | +12 |
+| 2 m/s | +7 | -10 | -19 | -15 | +2 | +24 | +34 | +25 |
+| 4 m/s | +23 | -4 | -22 | -20 | +13 | +61 | +82 | +61 |
+| 6 m/s | +49 | +18 | -7 | -14 | +33 | +110 | +146 | +105 |
 
-* On a point-to-point course, wind dominates everything else. A 6 m/s
-  headwind costs 7 minutes and a tailwind saves almost 5. Each extra
-  1 m/s of wind moves the time by roughly 40–80 s, depending on direction. Riders starting
-  at different times can face very different races.
-* On a loop, headwind and tailwind sections largely cancel, but not
-  fully: headwinds cost more than tailwinds give back. A light wind from the
-  north saves up to 10 s, but a 6 m/s wind slows the rider whichever way it
-  blows.
-* The time saved by pacing grows with wind (Flanders: 23–43 s instead of
-  32 s), because the optimal rider pushes into the headwind and saves energy
-  in the tailwind.
+* On the point-to-point Flanders course, which runs from the coast inland
+  to the south-west, wind dominates everything else. A 6 m/s wind from the
+  south costs about 6 minutes, and one from the north saves about 2.5.
+  Riders starting at different times can face very different races.
+* On the Tokyo loop, headwind and tailwind sections largely cancel, but not
+  fully, and the climb faces one way. Wind from the east or south-east
+  helps slightly, up to 22 s,
+  while a 6 m/s westerly costs about 2.5 minutes.
+* Pacing saves 68–92 s on Flanders and 79–93 s on
+  Tokyo across all these winds. The optimal rider pushes into the headwind
+  and saves energy in the tailwind.
 
 **Wrong forecast.** A plan made for a 4 m/s wind from the south-west, ridden
-in winds 1 m/s stronger or weaker and 45° off, costs at most
-12 s against a plan made for the actual wind. The plan is robust to
-small forecast errors. What matters is knowing roughly where the wind comes
-from.
+in winds 1 m/s stronger or weaker and 45° off, costs at most 17 s
+against a plan made for the actual wind. The plan is robust to small
+forecast errors. What matters is knowing roughly where the wind comes from.
 
 ### Missing the power targets
 
 `solver/execution.py` rides the optimal plan with errors that drift along
 the course (correlation length 200 m). Whenever the reserve runs out, the
 rider is forced down to the most they can still sustain. 500 rides of the
-men's Tokyo plan (TT specialist, perfect time 57:37.4):
+men's Tokyo plan (TT specialist, perfect time 57:07.5):
 
 | Execution | Mean time lost | 5–95% range | Steps forced to back off |
 | --- | --- | --- | --- |
-| random 2.5% | +7.6 s | +4.0 to +13.4 s | 5% |
-| random 5% | +16.3 s | +8.7 to +28.4 s | 5% |
-| random 10% | +36.8 s | +19.9 to +63.1 s | 6% |
-| 3% too easy | +54.4 s | +36.4 to +75.5 s | 0% |
-| 3% too hard | +8.9 s | +6.7 to +11.6 s | 18% |
-| 6% too hard | +12.1 s | +9.9 to +14.8 s | 29% |
+| random 2.5% | +9.7 s | +7.1 to +13.7 s | 5% |
+| random 5% | +20.4 s | +14.8 to +28.7 s | 5% |
+| random 10% | +43.8 s | +30.5 to +63.0 s | 5% |
+| 3% too easy | +51.9 s | +36.7 to +69.1 s | 0% |
+| 3% too hard | +15.9 s | +13.3 to +19.0 s | 14% |
+| 6% too hard | +21.0 s | +18.0 to +23.8 s | 22% |
 
 Expected split times with a 5% random error:
 
 | Checkpoint | Plan | 5–95% range |
 | --- | --- | --- |
-| top of climb 1 | 14:16.7 | 14:18.2 – 14:29.7 |
-| bottom of descent 1 | 23:20.6 | 23:22.5 – 23:35.0 |
-| end of lap 1 | 28:45.4 | 28:48.8 – 29:01.3 |
-| top of climb 2 | 43:09.8 | 43:16.1 – 43:34.6 |
-| bottom of descent 2 | 52:14.2 | 52:21.3 – 52:40.3 |
-| finish | 57:37.4 | 57:46.1 – 58:05.8 |
+| top of climb 1 (km 10.5) | 14:59.9 | 15:04.2 – 15:11.6 |
+| bottom of descent 1 (km 15.5) | 19:49.7 | 19:54.2 – 20:02.0 |
+| end of lap 1 (km 22.0) | 28:29.7 | 28:36.4 – 28:47.0 |
+| top of climb 2 (km 32.5) | 43:39.9 | 43:51.7 – 44:04.3 |
+| bottom of descent 2 (km 37.5) | 48:29.8 | 48:41.9 – 48:54.5 |
+| finish (km 43.9) | 57:07.5 | 57:22.3 – 57:36.2 |
 
-* Random errors cost little: about 15 s for a typical 5% error, 35 s for a
-  sloppy 10%.
+* Random errors cost little: about 20 s for a typical 5%
+  error, 44 s for a sloppy 10%.
 * **Riding too easy is far worse than riding too hard.** A rider 3% under
-  target finishes with unused reserve and loses about 55 s. A rider 3% over
-  target loses only about 9 s, because the reserve simply runs out early and
-  they are forced to ease off for a few short stretches.
-* A simpler plan, one average power per kilometre, loses
-  70 s against the detailed
-  plan but still beats constant power by
-  55 s.
+  target finishes with unused reserve and loses about 52 s.
+  A rider 3% over target loses only about 16 s, because
+  the reserve runs out early and they are forced to ease off for a few short
+  stretches.
+* **Timing matters more than averages.** A simplified plan with one average
+  power per kilometre loses 157 s against the
+  detailed plan and beats constant power by only 31 s.
+  It averages away exactly the moves that matter: easing off before corners
+  and sprinting out of them. Race guidance should describe where to change
+  effort, not just how hard to ride each kilometre.
 
 ### Team time trial
 
@@ -378,6 +389,6 @@ ride at about 62.5 km/h against 53.1 km/h alone.
   for efforts from a few minutes up to roughly an hour.
 - The optimizer is global only up to the resolution of the dynamic program's
   grids.
-- The demo courses are synthetic, and the Tokyo and Flanders courses are
-  reconstructions from published course facts, not surveyed tracks.
+- The demo courses are synthetic. The Tokyo and Flanders files are
+  user-made RideWithGPS routes, not official organiser files.
 - The fatigue rate $k$ is a placeholder that has not been fitted to data.

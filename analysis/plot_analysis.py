@@ -29,7 +29,9 @@ plt.rcParams.update({"font.size": 9, "axes.grid": True, "grid.alpha": 0.3})
 
 
 def _course(name):
-    return gpx.load_gpx(ROOT / "courses" / f"{name}.gpx")
+    real = name.startswith(("tokyo_2021", "flanders_2021"))
+    return gpx.load_gpx(ROOT / "courses" / f"{name}.gpx",
+                        sigma_ele=1.0 if real else None)
 
 
 def power_curves():

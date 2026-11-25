@@ -112,8 +112,11 @@ so it changes as the course turns.
 - **Elevation source.** GPS elevation also carries slow drift that smoothing
   cannot remove. Barometric or map-corrected elevation is better.
 - **Demo courses.** `flat`, `hill`, `climb`, `rolling`, and `technical` are
-  synthetic (`python -m courses.make_demo_gpx`). The Tokyo 2021 and Flanders
-  2021 courses and the custom loop come from `python -m courses.make_race_gpx`.
-  Tokyo and Flanders are reconstructions from published course facts (length,
-  climbing, climbs, start and finish), not surveyed tracks; replace them with
-  official GPX files when available.
+  synthetic (`python -m courses.make_demo_gpx`). The custom loop comes from
+  `python -m courses.make_race_gpx`. The Tokyo 2021 and Flanders 2021 courses
+  are real routes from RideWithGPS; see [courses/README.md](../courses/README.md).
+- **Map-derived elevation.** Route files made with an online planner take
+  their elevation from a map elevation model and often repeat points with
+  slightly different heights. The automatic noise estimate is then far too
+  small, and the spline reports grades over 100%. Pass `sigma_ele=1.0` for
+  such files.

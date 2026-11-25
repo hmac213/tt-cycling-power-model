@@ -65,10 +65,16 @@ def _setup(polish):
         sys.modules["casadi"] = stub
 
 
+# Real courses with map-derived elevation: see courses/README.md.
+MAP_ELEVATION_SIGMA = 1.0  # [m]
+
+
 def _load(course_name, wind_speed=0.0, wind_from=0.0):
     from course_loader import gpx
+    real = course_name.startswith(("tokyo_2021", "flanders_2021"))
     return gpx.load_gpx(
         ROOT / "courses" / f"{course_name}.gpx",
+        sigma_ele=MAP_ELEVATION_SIGMA if real else None,
         wind_speed=wind_speed, wind_from_deg=wind_from,
     )
 
@@ -232,11 +238,18 @@ def part_deviation(workers):
     grid = simulate.build_grid(course, physics)
     exact = execution.ride_plan(plan, grid, physics, rider)
 
-    # Key points: top of each main climb, bottom of each descent, lap line.
-    checkpoints = {
-        "top of climb 1": 9.5e3, "bottom of descent 1": 18.5e3, "end of lap 1": 22.1e3,
-        "top of climb 2": 31.6e3, "bottom of descent 2": 40.6e3, "finish": course.length,
-    }
+    # Key points: the high and low point of each lap, the lap line, finish.
+    half = course.length / 2
+    checkpoints = {}
+    for lap, (start, end) in enumerate(((0.0, half), (half, course.length)), 1):
+        part = (course.distance >= start) & (course.distance < end)
+        dist, ele = course.distance[part], course.elevation[part]
+        top = int(np.argmax(ele))
+        checkpoints[f"top of climb {lap}"] = float(dist[top])
+        checkpoints[f"bottom of descent {lap}"] = float(dist[top + int(np.argmin(ele[top:]))])
+        if lap == 1:
+            checkpoints["end of lap 1"] = float(half)
+    checkpoints["finish"] = float(course.length)
     points = np.array(list(checkpoints.values()))
     exact_splits = exact.split_times(points)[0]
 

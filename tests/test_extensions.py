@@ -85,8 +85,10 @@ class RaceCourseTest(unittest.TestCase):
         for name, length in (("tokyo_2021_men", 44_200), ("tokyo_2021_women", 22_100),
                              ("flanders_2021_men", 43_300),
                              ("flanders_2021_women", 30_300)):
-            course = gpx.load_gpx(_COURSES / f"{name}.gpx")
-            self.assertAlmostEqual(course.length, length, delta=0.005 * length)
+            course = gpx.load_gpx(_COURSES / f"{name}.gpx", sigma_ele=1.0)
+            self.assertAlmostEqual(course.length, length, delta=0.015 * length)
+            # Map elevation loaded this way gives realistic road grades.
+            self.assertLess(np.tan(np.abs(course.theta)).max(), 0.20)
 
     def test_custom_loop_meets_the_requirements(self):
         course = gpx.load_gpx(_COURSES / "custom_loop.gpx")

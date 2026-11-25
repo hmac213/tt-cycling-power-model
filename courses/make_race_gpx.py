@@ -1,39 +1,13 @@
-"""Generates the race courses: two reconstructed championship courses and a
-loop of our own design.
+"""Generates custom_loop.gpx, the course of our own design.
 
     python -m courses.make_race_gpx
 
-Writes, into this folder:
+A 12 km loop with seven sharp corners (80 degrees or more, radius 12-20 m),
+a 1.5 km climb that reaches 7%, and the finish line on top of the start
+line: what the problem statement asks of a course of our own design.
 
-* tokyo_2021_men.gpx / tokyo_2021_women.gpx: the 2021 Olympic time trial at
-  Fuji International Speedway. Two laps (44.2 km) for the men, one lap
-  (22.1 km) for the women.
-* flanders_2021_men.gpx / flanders_2021_women.gpx: the 2021 UCI World
-  Championship time trial from Knokke-Heist to Bruges, 43.3 km for the men
-  and 30.3 km for the women.
-* custom_loop.gpx: our own 12 km course with six sharp corners, a 7% climb,
-  and the finish line on top of the start line.
-
-The two championship courses are RECONSTRUCTIONS, not surveyed tracks. They
-match the published length, total climbing, order and size of the climbs, and
-the start and finish, but the road layout is schematic: a polygon with
-rounded corners of realistic radii. To use the real roads, drop the official
-GPX file into this folder and load it instead; nothing else changes.
-
-Published facts used:
-
-Tokyo (one 22.1 km lap, about 423 m climbing): starts on the circuit's
-start-finish straight (about 1.5 km flat), descends for about 4 km, climbs
-about 5 km at about 4.5% to the high point south of the circuit, rolls along
-route 151 past two golf courses, descends about 5 km back to the circuit,
-climbs about 2 km at 4.5% back to the start-finish straight, then rolls to
-the line.
-
-Flanders (point to point, flat): starts on the seafront in Knokke-Heist,
-winds inland, makes a 180-degree turn, runs straight about 5 km into Damme,
-follows the canal into Bruges, and finishes at 't Zand after a few city-centre
-corners with a gradual rise to the line. The women's course skips part of
-the inland section.
+The 2021 Tokyo and Flanders courses are real routes downloaded from
+RideWithGPS, not generated here; see courses/README.md.
 """
 
 import pathlib
@@ -46,15 +20,11 @@ from course_loader import gpx
 _OUTPUT_DIR = pathlib.Path(__file__).resolve().parent
 _POINT_SPACING = 5.0  # [m]
 
-# Local metres per degree at about 35 N and 51 N.
+# Local metres per degree at the course origin.
 _METRES_PER_DEG = {
-    "tokyo": (110_950.0, 91_000.0),
-    "flanders": (111_250.0, 69_700.0),
     "custom": (110_922.0, 92_385.0),
 }
 _ORIGINS = {
-    "tokyo": (35.3717, 138.9271),     # Fuji International Speedway
-    "flanders": (51.3500, 3.2860),    # Knokke-Heist seafront
     "custom": (34.0500, -118.4500),   # arbitrary
 }
 
@@ -195,69 +165,6 @@ def along(xy):
     return np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(xy, axis=0), axis=1))])
 
 
-# --------------------------------------------------------------------- Tokyo
-_TOKYO_VERTICES = [  # km, schematic lap layout around and south of the circuit
-    (0.0, 0.0), (1.5, 0.0), (0.7, -0.5), (-1.4, -2.6), (-0.6, -6.3),
-    (2.3, -8.4), (4.4, -6.1), (3.6, -2.7), (2.3, -1.3), (2.7, 0.7),
-    (0.6, 1.0),
-]
-_TOKYO_RADII = [25, 14, 30, 25, 60, 40, 35, 20, 15, 20, 25]  # m
-_TOKYO_GRADES = (  # (km breakpoints, grade %) for one 22.1 km lap
-    [0, 1.5, 4.5, 9.5, 11.5, 13.5, 18.5, 20.5, 21.3, 22.1],
-    [0.0, -3.0, 4.8, 1.5, -1.5, -4.9, 4.5, 1.0, -0.375],
-)
-
-
-def tokyo_lap():
-    xy = fit_length(_TOKYO_VERTICES, _TOKYO_RADII, True, 22_100.0)
-    s = along(xy)
-    elevation = grade_profile(s, *_TOKYO_GRADES)
-    # Rollers bring the climbing up to the published 423 m per lap.
-    elevation += 11.0 * np.sin(2 * np.pi * 8 * s / s[-1])
-    elevation += 560.0 - elevation[0]  # circuit altitude, roughly
-    return xy, elevation
-
-
-def write_tokyo():
-    xy, elevation = tokyo_lap()
-    write("tokyo_2021_women", "tokyo", xy, elevation)
-    write("tokyo_2021_men", "tokyo", np.vstack([xy, xy[1:]]),
-          np.concatenate([elevation, elevation[1:]]))
-
-
-# ------------------------------------------------------------------ Flanders
-_FLANDERS_MEN = [  # km from the Knokke-Heist seafront start
-    (0.0, 0.0), (-3.0, -0.8), (-3.5, -4.0), (1.5, -6.0), (4.0, -9.0),
-    (5.0, -13.0), (1.0, -10.5), (-2.5, -11.5), (-4.5, -15.0),
-    (-4.0, -15.8), (-5.0, -16.2), (-5.3, -16.0),
-]
-_FLANDERS_MEN_RADII = [0, 30, 20, 25, 20, 10, 20, 20, 25, 10, 10, 0]
-_FLANDERS_WOMEN = [
-    (0.0, 0.0), (-3.0, -0.8), (-3.5, -4.0), (0.5, -6.5), (2.6, -9.6),
-    (-2.5, -11.5), (-4.5, -15.0), (-4.0, -15.8), (-5.0, -16.2),
-    (-5.3, -16.0),
-]
-_FLANDERS_WOMEN_RADII = [0, 30, 20, 25, 12, 20, 25, 10, 10, 0]
-
-
-def flanders(vertices, radii, length):
-    xy = fit_length(vertices, radii, False, length)
-    s = along(xy)
-    frac = s / s[-1]
-    elevation = 4.0 + 0.0 * s
-    for centre in (0.15, 0.4, 0.62, 0.85):  # bridges over canals
-        elevation += 4.0 * np.exp(-0.5 * ((s - centre * s[-1]) / 60.0) ** 2)
-    elevation += 8.0 * np.clip((frac - 0.88) / 0.12, 0, 1)  # rise to finish
-    return xy, elevation
-
-
-def write_flanders():
-    write("flanders_2021_men", "flanders",
-          *flanders(_FLANDERS_MEN, _FLANDERS_MEN_RADII, 43_300.0))
-    write("flanders_2021_women", "flanders",
-          *flanders(_FLANDERS_WOMEN, _FLANDERS_WOMEN_RADII, 30_300.0))
-
-
 # -------------------------------------------------------------- Custom loop
 _CUSTOM_VERTICES = [
     (0.0, 0.0), (2.2, 0.0), (2.2, 1.4), (3.4, 1.4), (3.4, 2.8),
@@ -282,8 +189,6 @@ def write_custom():
 
 
 def main():
-    write_tokyo()
-    write_flanders()
     write_custom()
 
 

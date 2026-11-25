@@ -79,6 +79,19 @@ def _load(course_name, wind_speed=0.0, wind_from=0.0):
     )
 
 
+# Air density on race day [kg/m^3]. Tokyo: Fuji Speedway, about 500-700 m
+# up on a hot day. Flanders: sea level. Custom loop: taken as sea level.
+AIR_DENSITY = {"tokyo_2021": 1.15, "flanders_2021": 1.20, "custom": 1.20}
+
+
+def _physics(profile, course_name):
+    """Builds a rider's physics parameters at the venue of a course."""
+    from physics_model import params as physics_params
+    rho = next(value for prefix, value in AIR_DENSITY.items()
+               if course_name.startswith(prefix))
+    return profile.physics_params(physics_params.PhysicsParams(rho=rho))
+
+
 def _solve(job):
     """Solves one (course, profile, wind, fatigue) case. Runs in a worker."""
     _setup(job["polish"])
@@ -88,7 +101,7 @@ def _solve(job):
 
     course = _load(job["course"], job.get("wind_speed", 0.0), job.get("wind_from", 0.0))
     profile = rider_profiles.load(job["profile"])
-    physics = profile.physics_params()
+    physics = _physics(profile, job["course"])
     rider = profile.rider_params()
     if job.get("fatigue"):
         rider = dataclasses.replace(rider, **job["fatigue"])
@@ -179,7 +192,7 @@ def _wind_forecast_error():
         ("tokyo", "tokyo_2021_women", "tt_specialist_women", (4.0, 225)),
     ):
         profile = rider_profiles.load(profile_name)
-        physics, rider = profile.physics_params(), profile.rider_params()
+        physics, rider = _physics(profile, course_name), profile.rider_params()
         plan_tag = f"{label}__{forecast[0]:g}ms_from{forecast[1]:03d}"
         plan = np.load(OUT / f"wind__{plan_tag}.npz")["power"]
         reopt = {r["tag"]: r for r in json.loads((OUT / "wind.json").read_text())}
@@ -233,7 +246,7 @@ def part_deviation(workers):
     data = np.load(data_path)
     plan = data["power"]
     profile = rider_profiles.load("tt_specialist")
-    physics, rider = profile.physics_params(), profile.rider_params()
+    physics, rider = _physics(profile, "tokyo_2021_men"), profile.rider_params()
     course = _load("tokyo_2021_men")
     grid = simulate.build_grid(course, physics)
     exact = execution.ride_plan(plan, grid, physics, rider)

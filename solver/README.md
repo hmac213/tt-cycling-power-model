@@ -69,6 +69,24 @@ exactly at the finish. It is the benchmark.
   simulator's RK4 substeps, time rule, and stamina update, so the polished
   plan is verified by simply simulating it.
 
+### Fatigue
+
+When `RiderParams.fatigue_rate > 0`, CP depends on elapsed time, and elapsed
+time depends on the plan. `optimize` alternates the two. It fixes CP on
+every step from the previous ride's times (`cp_scale`), solves with that
+fixed CP, and repeats until no step's CP changes by more than 0.01%
+(usually 2–4 rounds). The simulator, the dynamic program, and the
+collocation stage all read CP per step through `cp_model.at_step`.
+
+### Imperfect execution (`execution.py`)
+
+`execution.ride_plan` rides a fixed plan with relative power errors
+(`execution.power_noise`: a drifting AR(1) error plus an optional bias),
+and/or on a grid with different wind from the one the plan was made for.
+When a requested power would take the reserve below zero, the rider rides
+the largest power that keeps $B \ge 0$ instead. It simulates many rides at
+once and reports split times at any distances.
+
 ## Settings
 
 | Name | Where | Meaning | Default |

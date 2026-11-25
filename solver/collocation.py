@@ -36,6 +36,7 @@ import casadi as ca
 import numpy as np
 
 from physics_model import params as physics_params
+from power_model import cp_model
 from power_model import params as rider_params
 from solver import simulate
 
@@ -132,7 +133,10 @@ def polish(
         raise ValueError("The collocation stage needs alpha <= 1.")
     num_steps = grid.num_steps
     speed_floor = config.min_speed**3
-    max_above = rider.p_max / rider.cp - 1.0
+    # CP on each step; it differs between steps only when fatigue is on.
+    step_riders = [cp_model.at_step(rider, k) for k in range(num_steps)]
+    step_cp = np.array([r.cp for r in step_riders])
+    max_above = rider.p_max / step_cp - 1.0
     # Typical size of v^3, to bring the motion constraints to order one.
     speed_scale = float(np.mean(start.speed)) ** 3
 
@@ -150,7 +154,7 @@ def polish(
     for k in range(num_steps):
         start_speed = grid.start_speed if k == 0 else speed[k - 1]
         start_deficit = 0.0 if k == 0 else deficit[k - 1]
-        power = rider.cp * (1.0 - below[k] + above[k])
+        power = step_cp[k] * (1.0 - below[k] + above[k])
         trajectory = simulate.free_trajectory(
             start_speed**3, power, grid.theta[k], grid.headwind[k],
             grid.step, physics, to_speed,
@@ -166,7 +170,9 @@ def polish(
         motion.append((free_cubed - speed[k] ** 3) / speed_scale)
         stamina.append(
             deficit[k]
-            - _next_deficit(start_deficit, below[k], above[k], duration, rider)
+            - _next_deficit(
+                start_deficit, below[k], above[k], duration, step_riders[k]
+            )
         )
 
     problem = {
@@ -187,7 +193,7 @@ def polish(
         },
     })
 
-    start_ratio = start.power / rider.cp
+    start_ratio = start.power / step_cp
     guess = np.concatenate([
         np.clip(start.speed[1:], config.min_speed, grid.speed_cap),
         np.clip(1.0 - start.reserve[1:] / rider.w_prime, 0.0, 1.0),
@@ -204,7 +210,7 @@ def polish(
             grid.speed_cap,
             np.ones(num_steps),
             np.ones(num_steps),
-            np.full(num_steps, max_above),
+            max_above,
         ]),
         lbg=np.zeros(2 * num_steps),
         ubg=np.concatenate([np.full(num_steps, np.inf), zeros]),
@@ -214,7 +220,7 @@ def polish(
     below_value = values[2 * num_steps:3 * num_steps]
     above_value = values[3 * num_steps:]
     plan = np.clip(
-        rider.cp * (1.0 - below_value + above_value), 0.0, rider.p_max
+        step_cp * (1.0 - below_value + above_value), 0.0, rider.p_max
     )
     stats = solver.stats()
     return PolishResult(

@@ -382,7 +382,7 @@ def simulate_batch(
         )
         time[..., i + 1] = time[..., i] + duration
         reserve[..., i + 1] = cp_model.step_reserve(
-            reserve[..., i], step_power, duration, rider
+            reserve[..., i], step_power, duration, cp_model.at_step(rider, i)
         )
     return speed, time, reserve, brake_energy
 

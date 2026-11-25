@@ -1,0 +1,15 @@
+{
+  "name": "TT specialist (women)",
+  "description": "Powerful female rider in a very aerodynamic time-trial position.",
+  "rider_mass_kg": 63.0,
+  "bike_mass_kg": 8.0,
+  "cda_m2": 0.18,
+  "crr": 0.003,
+  "power": {
+    "cp_w": 300.0,
+    "w_prime_j": 16000.0,
+    "p_max_w": 950.0,
+    "recovery_alpha": 1.0,
+    "recovery_beta": 1.0
+  }
+}

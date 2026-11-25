@@ -151,7 +151,7 @@ def _time_to_finish(
         reserve[None, :, None],
         powers[None, None, :],
         duration[:, None, :],
-        rider,
+        cp_model.at_step(rider, index),
     )
     rest = _interpolate(
         value_next, tables, end_speed[:, None, :], end_reserve
@@ -222,6 +222,9 @@ def solve(
             speed, plan[k], k, grid, physics, config
         )
         reserve = np.maximum(
-            cp_model.step_reserve(reserve, plan[k], duration, rider), 0.0
+            cp_model.step_reserve(
+                reserve, plan[k], duration, cp_model.at_step(rider, k)
+            ),
+            0.0,
         )
     return simulate.simulate(plan, grid, physics, rider, config)

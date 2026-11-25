@@ -34,6 +34,15 @@ rolling courses. The climber has more power per kilogram, which decides steep
 climbs: on `courses/climb.gpx` (6 km at 8%) the climber wins by 30 s, and on
 `courses/flat.gpx` (10 km) the TT specialist wins by 91 s.
 
+## Women's profiles
+
+`tt_specialist_women` (63 + 8 kg, $C_dA$ 0.18 m², CP 300 W, W′ 16 kJ,
+$P_\text{max}$ 950 W) and `climber_women` (52 + 7 kg, $C_dA$ 0.22 m², CP
+270 W, W′ 12 kJ, $P_\text{max}$ 750 W). Like the men's profiles, these
+are illustrative values in the professional range. On the reconstructed
+Flanders course, the women's TT specialist is 4% slower than the 2021
+world champion.
+
 ## File format
 
 ```json

@@ -26,6 +26,21 @@ $t_\text{exhaustion} = W' / (P - CP)$ (`cp_model.time_to_exhaustion`).
 The defaults describe a strong amateur. Typical ranges are $CP$ 200–450 W and
 $W'$ 10–30 kJ. A rider profile (`profiles/`) overrides all five.
 
+## Long-race fatigue (optional)
+
+The plain model lets a rider hold CP forever. With `fatigue_rate` $k > 0$,
+CP declines after `fatigue_onset` $t_0$ (default 30 min):
+
+$$CP(t) = CP\left(1 - k \ln\frac{t}{t_0}\right), \qquad t > t_0,$$
+
+floored at half of CP. This adds the gradual fatigue of long races and caps
+the total energy available at $\int_0^T CP(t)\,dt + W'$. The solver
+applies it per grid step through `cp_scale` (see `solver/optimize.py`). It
+is off by default, and $k$ is a placeholder that has not been fitted to data.
+
+- `cp_model.fatigue_factor(time, rider)`: $CP(t)/CP$.
+- `cp_model.at_step(rider, k)`: the rider with that step's CP.
+
 ## Functions
 
 - `cp_model.reserve_rate(power, reserve, rider)`: the right-hand side $dB/dt$ above.

@@ -9,6 +9,8 @@ B(t) is the remaining anaerobic reserve, with 0 <= B <= W'.
 Every function broadcasts over numpy arrays.
 """
 
+import dataclasses
+
 import numpy as np
 from numpy import typing as npt
 
@@ -101,3 +103,49 @@ def time_to_exhaustion(
         Time to exhaustion W' / (P - CP) [s].
     """
     return rider.w_prime / (np.asarray(power, float) - rider.cp)
+
+
+# CP never falls below this fraction of its fresh value.
+_MIN_FATIGUE_FACTOR = 0.5
+
+
+def fatigue_factor(
+    time: npt.ArrayLike,
+    rider: params.RiderParams,
+) -> np.ndarray:
+    """Computes how much of the fresh CP is left after riding for a while.
+
+    CP(t) / CP = 1 - k ln(t / t0) for t > t0, and 1 before that, where k is
+    `fatigue_rate` and t0 is `fatigue_onset`. This is the gradual loss of
+    sustainable power over long efforts that the plain CP model leaves out.
+
+    Args:
+        time: Elapsed race time [s].
+        rider: Rider parameters.
+
+    Returns:
+        The factor, between 0.5 and 1.
+    """
+    ratio = np.maximum(np.asarray(time, float), rider.fatigue_onset)
+    factor = 1.0 - rider.fatigue_rate * np.log(ratio / rider.fatigue_onset)
+    return np.clip(factor, _MIN_FATIGUE_FACTOR, 1.0)
+
+
+def at_step(rider: params.RiderParams, index: int) -> params.RiderParams:
+    """Returns the rider as they are on one grid step.
+
+    Without `cp_scale` this is the rider unchanged. With it, CP is scaled
+    by that step's factor, which is how fatigue enters the solver.
+
+    Args:
+        rider: Rider parameters.
+        index: Grid step.
+
+    Returns:
+        Rider parameters with a plain scalar CP.
+    """
+    if rider.cp_scale is None:
+        return rider
+    return dataclasses.replace(
+        rider, cp=rider.cp * rider.cp_scale[index], cp_scale=None
+    )

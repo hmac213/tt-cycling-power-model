@@ -1,0 +1,79 @@
+[
+ {
+  "tag": "k0",
+  "course": "tokyo_2021_men",
+  "profile": "tt_specialist",
+  "fatigue": null,
+  "polish": false,
+  "length_km": 44.220939333011444,
+  "climb_m": 834.247294015844,
+  "constant_time": 3582.9558079457133,
+  "constant_power": 416.140181657318,
+  "optimal_time": 3457.4001375925964,
+  "saved": 125.55567035311697,
+  "optimal_avg_power": 396.82431247272916,
+  "brake_constant_kj": 149.19915371830936,
+  "brake_optimal_kj": 68.36667818796627,
+  "polished": false
+ },
+ {
+  "tag": "k0.035",
+  "course": "tokyo_2021_men",
+  "profile": "tt_specialist",
+  "fatigue": {
+   "fatigue_rate": 0.035,
+   "fatigue_onset": 1800.0
+  },
+  "polish": false,
+  "length_km": 44.220939333011444,
+  "climb_m": 834.247294015844,
+  "constant_time": 3594.9738661565643,
+  "constant_power": 413.35822180841564,
+  "optimal_time": 3467.4645655086483,
+  "saved": 127.509300647916,
+  "optimal_avg_power": 394.37675939883104,
+  "brake_constant_kj": 148.32448256333177,
+  "brake_optimal_kj": 68.07611922569963,
+  "polished": false
+ },
+ {
+  "tag": "k0.07",
+  "course": "tokyo_2021_men",
+  "profile": "tt_specialist",
+  "fatigue": {
+   "fatigue_rate": 0.07,
+   "fatigue_onset": 1800.0
+  },
+  "polish": false,
+  "length_km": 44.220939333011444,
+  "climb_m": 834.247294015844,
+  "constant_time": 3607.3553513630186,
+  "constant_power": 410.5277291829324,
+  "optimal_time": 3477.670120319217,
+  "saved": 129.68523104380165,
+  "optimal_avg_power": 391.85521209462394,
+  "brake_constant_kj": 147.43318029343195,
+  "brake_optimal_kj": 67.82452270981247,
+  "polished": false
+ },
+ {
+  "tag": "k0.14",
+  "course": "tokyo_2021_men",
+  "profile": "tt_specialist",
+  "fatigue": {
+   "fatigue_rate": 0.14,
+   "fatigue_onset": 1800.0
+  },
+  "polish": false,
+  "length_km": 44.220939333011444,
+  "climb_m": 834.247294015844,
+  "constant_time": 3666.029541471225,
+  "constant_power": 397.5868859001179,
+  "optimal_time": 3499.1402109789215,
+  "saved": 166.88933049230354,
+  "optimal_avg_power": 386.64396019961987,
+  "brake_constant_kj": 143.34188218201035,
+  "brake_optimal_kj": 67.34969490836616,
+  "polished": false
+ }
+]

@@ -1,0 +1,15 @@
+{
+  "name": "Climber (women)",
+  "description": "Light female rider with high power per kilogram and a less aerodynamic position.",
+  "rider_mass_kg": 52.0,
+  "bike_mass_kg": 7.0,
+  "cda_m2": 0.22,
+  "crr": 0.003,
+  "power": {
+    "cp_w": 270.0,
+    "w_prime_j": 12000.0,
+    "p_max_w": 750.0,
+    "recovery_alpha": 1.0,
+    "recovery_beta": 1.0
+  }
+}

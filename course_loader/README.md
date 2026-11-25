@@ -111,6 +111,9 @@ so it changes as the course turns.
   by a factor of two.
 - **Elevation source.** GPS elevation also carries slow drift that smoothing
   cannot remove. Barometric or map-corrected elevation is better.
-- **Demo courses.** No specific course is named in the model write-up, so
-  the five files in `courses/` are synthetic
-  (`python -m courses.make_demo_gpx`).
+- **Demo courses.** `flat`, `hill`, `climb`, `rolling`, and `technical` are
+  synthetic (`python -m courses.make_demo_gpx`). The Tokyo 2021 and Flanders
+  2021 courses and the custom loop come from `python -m courses.make_race_gpx`.
+  Tokyo and Flanders are reconstructions from published course facts (length,
+  climbing, climbs, start and finish), not surveyed tracks; replace them with
+  official GPX files when available.

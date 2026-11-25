@@ -1,14 +1,14 @@
 {
-  "name": "Climbing specialist",
-  "description": "Light rider with a high power-to-weight ratio and a less aerodynamic position.",
-  "rider_mass_kg": 58.0,
-  "bike_mass_kg": 7.0,
-  "cda_m2": 0.24,
-  "crr": 0.003,
+  "name": "Climber (men)",
+  "description": "Typical male professional climber: mass from Valenzuela et al. 2022 (climber group), CP/W' fitted to the median relative record power profile, CdA: the Garcia-Lopez et al. 2014 professional value (0.237 m^2) scaled by frontal area.",
+  "rider_mass_kg": 63.2,
+  "bike_mass_kg": 7.5,
+  "cda_m2": 0.217,
+  "crr": 0.0032,
   "power": {
-    "cp_w": 350.0,
-    "w_prime_j": 15000.0,
-    "p_max_w": 900.0,
+    "cp_w": 359,
+    "w_prime_j": 27490,
+    "p_max_w": 1137,
     "recovery_alpha": 1.0,
     "recovery_beta": 1.0
   }

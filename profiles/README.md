@@ -16,32 +16,39 @@ power = profile.rider_params()             # CP, W', P_max, alpha, beta
 
 ## Shipped profiles
 
-| | `tt_specialist` | `climber` |
-| --- | --- | --- |
-| Rider mass [kg] | 74 | 58 |
-| Bike mass [kg] | 9.0 | 7.0 |
-| $C_dA$ [m²] | 0.19 | 0.24 |
-| $C_{rr}$ | 0.003 | 0.003 |
-| $CP$ [W] | 410 | 350 |
-| $W'$ [kJ] | 22 | 15 |
-| $P_\text{max}$ [W] | 1300 | 900 |
-| $CP$ per kg of rider [W/kg] | 5.54 | 6.03 |
-| $CP$ per kg of rider + bike [W/kg] | 4.94 | 5.38 |
-| $CP / C_dA$ [W/m²] | 2158 | 1458 |
+Two rider types (time trial specialist, climber), each in a men's and a
+women's version, built from published data on professional riders. Every
+value, its source and the fits are in [SOURCES.md](SOURCES.md).
 
-The TT specialist has far more power per unit of drag, which decides flat and
-rolling courses. The climber has more power per kilogram, which decides steep
-climbs: on `courses/climb.gpx` (6 km at 8%) the climber wins by 30 s, and on
-`courses/flat.gpx` (10 km) the TT specialist wins by 91 s.
+| | `tt_specialist` | `climber` | `tt_specialist_women` | `climber_women` |
+| --- | --- | --- | --- | --- |
+| Rider mass [kg] | 72.6 | 63.2 | 61.7 | 53.7 |
+| Bike mass [kg] | 8.5 | 7.5 | 8.5 | 7.5 |
+| $C_dA$ [m²] | 0.211 | 0.217 | 0.188 | 0.193 |
+| $C_{rr}$ | 0.0032 | 0.0032 | 0.0032 | 0.0032 |
+| $CP$ [W] | 400 | 359 | 298 | 255 |
+| $W'$ [kJ] | 31.8 | 27.5 | 27.8 | 16.1 |
+| $P_\text{max}$ [W] | 1306 | 1137 | 944 | 822 |
+| $CP$ per kg of rider [W/kg] | 5.51 | 5.68 | 4.83 | 4.75 |
+| $CP$ per kg of rider + bike [W/kg] | 4.93 | 5.08 | 4.25 | 4.17 |
+| $CP / C_dA$ [W/m²] | 1896 | 1654 | 1585 | 1321 |
 
-## Women's profiles
+**Sources in brief.** Men's mass and power: Valenzuela et al. (2022), record
+power profiles of 144 professionals by rider type. Women's power: Mateo-March
+et al. (2022); women's mass scaled from Ebert et al. (2005). CP and W′ are
+linear fits W = CP·t + W′ to the 5, 10 and 20 min maximal mean powers.
+Time trialists' $C_dA$: 0.211 m² in a time-trial position, wind tunnel
+(Defraeye et al. 2010), scaled by frontal area for the women. Climbers'
+$C_dA$: the Garcia-Lopez et al. (2014) professional value (0.237 m²) scaled
+by frontal area, i.e. a less optimised position than a specialist's.
+$C_{rr}$: Martin et al. (1998). $P_\text{max}$: best 5 s power.
 
-`tt_specialist_women` (63 + 8 kg, $C_dA$ 0.18 m², CP 300 W, W′ 16 kJ,
-$P_\text{max}$ 950 W) and `climber_women` (52 + 7 kg, $C_dA$ 0.22 m², CP
-270 W, W′ 12 kJ, $P_\text{max}$ 750 W). Like the men's profiles, these
-are illustrative values in the professional range. On the real Flanders
-course, the women's TT specialist is about 5% slower than the 2021 world
-champion.
+**The data, not a rule, set the direction.** Men's climbers have more power
+per kilogram than men's time trialists (Valenzuela 2022). Women's time
+trialists have *more* power per kilogram than women's climbers over 10–60 min
+(Mateo-March 2022), so `climber_women` uses the median (P50) record power
+profile and is slightly below the specialist in W/kg. In both genders the
+time trialist has more power per unit of drag.
 
 ## File format
 
@@ -75,11 +82,15 @@ conditions, not the rider, so they stay in `PhysicsParams`. Pass a base to
 
 ## Assumptions and gaps filled
 
-- **The numbers are illustrative.** They are round figures in the range of
-  professional riders, not measurements of anyone.
+- **Typical riders, not individuals.** Each profile is a percentile of a
+  population of professionals, not any one rider, so it should be somewhat
+  slower than race winners.
+- **Women's per-type data are sparse.** Women's masses and the climber's
+  position are scaled from the men's type differences (see SOURCES.md).
+- **Bike masses are assumed.** No peer-reviewed source was found.
 - **One $C_dA$ per rider.** The rider holds one position on every course,
   including climbs, where real riders sit up.
 - **The power profile is CP, $W'$, and $P_\text{max}$.** No full power-duration
-  curve is stored. Both riders use the same recovery law ($\alpha = \beta = 1$).
-- **Same tyres and same grip.** Both profiles use $C_{rr} = 0.003$ and corner
+  curve is stored. All riders use the same recovery law ($\alpha = \beta = 1$).
+- **Same tyres and same grip.** All profiles use $C_{rr} = 0.0032$ and corner
   equally well.

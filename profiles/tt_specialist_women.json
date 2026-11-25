@@ -1,14 +1,14 @@
 {
   "name": "TT specialist (women)",
-  "description": "Powerful female rider in a very aerodynamic time-trial position.",
-  "rider_mass_kg": 63.0,
-  "bike_mass_kg": 8.0,
-  "cda_m2": 0.18,
-  "crr": 0.003,
+  "description": "Typical female professional time-trial specialist: power from the upper quartile of Mateo-March et al. 2022, mass scaled from Ebert et al. 2005, CdA = Defraeye et al. 2010 time-trial value (0.211 m^2) scaled by frontal area.",
+  "rider_mass_kg": 61.7,
+  "bike_mass_kg": 8.5,
+  "cda_m2": 0.188,
+  "crr": 0.0032,
   "power": {
-    "cp_w": 300.0,
-    "w_prime_j": 16000.0,
-    "p_max_w": 950.0,
+    "cp_w": 298,
+    "w_prime_j": 27770,
+    "p_max_w": 944,
     "recovery_alpha": 1.0,
     "recovery_beta": 1.0
   }

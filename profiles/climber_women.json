@@ -1,14 +1,14 @@
 {
   "name": "Climber (women)",
-  "description": "Light female rider with high power per kilogram and a less aerodynamic position.",
-  "rider_mass_kg": 52.0,
-  "bike_mass_kg": 7.0,
-  "cda_m2": 0.22,
-  "crr": 0.003,
+  "description": "Typical female professional climber: CP/W' fitted to the median (P50) record power profile of Mateo-March et al. 2022, which follows the data (women's time trialists have higher relative power over 10-60 min). Mass scaled from Ebert et al. 2005; CdA: the Garcia-Lopez et al. 2014 value (0.237 m^2) scaled by frontal area.",
+  "rider_mass_kg": 53.7,
+  "bike_mass_kg": 7.5,
+  "cda_m2": 0.193,
+  "crr": 0.0032,
   "power": {
-    "cp_w": 270.0,
-    "w_prime_j": 12000.0,
-    "p_max_w": 750.0,
+    "cp_w": 255,
+    "w_prime_j": 16100,
+    "p_max_w": 822,
     "recovery_alpha": 1.0,
     "recovery_beta": 1.0
   }

@@ -1,14 +1,14 @@
 {
-  "name": "TT specialist",
-  "description": "Big, powerful rider in a very aerodynamic time-trial position.",
-  "rider_mass_kg": 74.0,
-  "bike_mass_kg": 9.0,
-  "cda_m2": 0.19,
-  "crr": 0.003,
+  "name": "TT specialist (men)",
+  "description": "Typical male WorldTour/ProTeam time-trial specialist: mass from Valenzuela et al. 2022 (TT group), CP/W' fitted to their upper-quartile absolute record power profile, CdA 0.211 m^2 from Defraeye et al. 2010 (wind tunnel, time-trial position).",
+  "rider_mass_kg": 72.6,
+  "bike_mass_kg": 8.5,
+  "cda_m2": 0.211,
+  "crr": 0.0032,
   "power": {
-    "cp_w": 410.0,
-    "w_prime_j": 22000.0,
-    "p_max_w": 1300.0,
+    "cp_w": 400,
+    "w_prime_j": 31800,
+    "p_max_w": 1306,
     "recovery_alpha": 1.0,
     "recovery_beta": 1.0
   }

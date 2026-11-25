@@ -193,8 +193,11 @@ A frozen copy of the summaries and figures is in `results/`.
 | Sensitivity to missing power targets, split-time ranges | `solver/execution.py`, `analysis/run_analysis.py deviation` |
 | Team time trial extension | [docs/team_time_trial.md](docs/team_time_trial.md) |
 
-These results come from the dynamic program alone (no collocation
-polish), which changes times by about 0.1 s.
+These results use the full solver. The collocation polish was accepted
+for 70 of the 86 solves and improved them by at most 0.6 s. For the other 16,
+all on Tokyo, where the many tight corners make the nonlinear program hard
+to converge, the solver kept the dynamic-program plan. That plan is valid and
+within a second of optimal. Each result records this in its `polished` field.
 
 ### Courses
 
@@ -232,18 +235,18 @@ optimal time and saving with long-race fatigue on ($k = 0.07$, onset
 
 | Course | Rider | Constant | Optimal | Saved | Braked: constant → optimal | With fatigue: optimal (saved) |
 | --- | --- | --- | --- | --- | --- | --- |
-| Tokyo (43.9 km) | TT specialist | 60:15.3 | 57:07.5 | 187.8 s | 270 → 116 kJ | 57:27.5 (191.1 s) |
-| Tokyo (43.9 km) | Climber | 63:58.6 | 61:35.8 | 142.8 s | 126 → 39 kJ | 62:00.0 (154.8 s) |
-| Tokyo (22.0 km) | TT specialist (W) | 32:53.3 | 31:27.7 | 85.6 s | 93 → 40 kJ | 31:27.7 (85.8 s) |
+| Tokyo (43.9 km) | TT specialist | 60:15.3 | 57:07.5 | 187.8 s | 270 → 116 kJ | 57:26.9 (191.7 s) |
+| Tokyo (43.9 km) | Climber | 63:58.6 | 61:35.7 | 142.9 s | 126 → 38 kJ | 61:59.4 (155.4 s) |
+| Tokyo (22.0 km) | TT specialist (W) | 32:53.3 | 31:27.4 | 85.9 s | 93 → 39 kJ | 31:27.4 (86.1 s) |
 | Tokyo (22.0 km) | Climber (W) | 34:16.5 | 33:08.7 | 67.8 s | 46 → 13 kJ | 33:08.9 (68.1 s) |
-| Flanders (43.7 km) | TT specialist | 51:47.1 | 50:27.8 | 79.3 s | 125 → 36 kJ | 50:35.8 (80.2 s) |
-| Flanders (43.7 km) | Climber | 57:29.0 | 56:32.6 | 56.5 s | 69 → 15 kJ | 56:45.9 (56.9 s) |
-| Flanders (30.3 km) | TT specialist (W) | 38:50.0 | 37:58.3 | 51.7 s | 60 → 15 kJ | 37:59.6 (51.9 s) |
-| Flanders (30.3 km) | Climber (W) | 42:07.6 | 41:29.3 | 38.3 s | 37 → 6 kJ | 41:32.1 (38.5 s) |
-| Custom loop (12.0 km) | TT specialist | 15:21.8 | 14:49.8 | 32.1 s | 55 → 30 kJ | – |
-| Custom loop (12.0 km) | Climber | 16:36.4 | 16:13.1 | 23.3 s | 27 → 11 kJ | – |
-| Custom loop (12.0 km) | TT specialist (W) | 16:47.5 | 16:15.1 | 32.4 s | 37 → 19 kJ | – |
-| Custom loop (12.0 km) | Climber (W) | 17:46.8 | 17:21.8 | 25.0 s | 20 → 9 kJ | – |
+| Flanders (43.7 km) | TT specialist | 51:47.1 | 50:27.5 | 79.5 s | 125 → 35 kJ | 50:35.5 (80.5 s) |
+| Flanders (43.7 km) | Climber | 57:29.0 | 56:32.4 | 56.7 s | 69 → 15 kJ | 56:45.7 (57.2 s) |
+| Flanders (30.3 km) | TT specialist (W) | 38:50.0 | 37:58.1 | 51.9 s | 60 → 15 kJ | 37:59.4 (52.2 s) |
+| Flanders (30.3 km) | Climber (W) | 42:07.6 | 41:29.2 | 38.5 s | 37 → 6 kJ | 41:31.9 (38.7 s) |
+| Custom loop (12.0 km) | TT specialist | 15:21.8 | 14:49.7 | 32.1 s | 55 → 29 kJ | – |
+| Custom loop (12.0 km) | Climber | 16:36.4 | 16:13.0 | 23.4 s | 27 → 11 kJ | – |
+| Custom loop (12.0 km) | TT specialist (W) | 16:47.5 | 16:15.0 | 32.4 s | 37 → 19 kJ | – |
+| Custom loop (12.0 km) | Climber (W) | 17:46.8 | 17:21.7 | 25.1 s | 20 → 9 kJ | – |
 
 **Check against the real races.** The model's TT specialists are
 3.7–5.6% slower than the 2021 winners: Tokyo men
@@ -285,9 +288,9 @@ effect on the men's Tokyo course (TT specialist):
 | $k$ | Constant | Optimal | Saved |
 | --- | --- | --- | --- |
 | 0 (off) | 60:15.3 | 57:07.5 | 187.8 s |
-| 0.035 | 60:26.8 | 57:17.5 | 189.3 s |
-| 0.07 | 60:38.6 | 57:27.5 | 191.1 s |
-| 0.14 | 61:35.2 | 57:47.6 | 227.6 s |
+| 0.035 | 60:26.8 | 57:17.4 | 189.4 s |
+| 0.07 | 60:38.6 | 57:26.9 | 191.7 s |
+| 0.14 | 61:35.2 | 57:47.1 | 228.1 s |
 
 Fatigue barely matters below about 35 minutes (the women's courses). On the
 50–65-minute men's courses it costs 8–24 s at
@@ -300,21 +303,21 @@ The wind blows uniformly from 8 directions at 2, 4, and 6 m/s, and the plan is
 re-optimized each time. The table shows the change in optimal time from a calm
 day, in seconds, by the direction the wind blows from:
 
-**Flanders, men's TT specialist (point to point; calm 50:27.8)**
+**Flanders, men's TT specialist (point to point; calm 50:27.5)**
 
 | Wind | N | NE | E | SE | S | SW | W | NW |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2 m/s | -72 | -67 | -19 | +50 | +96 | +87 | +30 | -35 |
+| 2 m/s | -72 | -67 | -19 | +50 | +96 | +87 | +30 | -34 |
 | 4 m/s | -121 | -115 | -27 | +115 | +218 | +195 | +71 | -55 |
-| 6 m/s | -149 | -145 | -24 | +198 | +368 | +326 | +123 | -61 |
+| 6 m/s | -149 | -145 | -24 | +197 | +368 | +325 | +123 | -61 |
 
-**Tokyo, women's TT specialist (loop; calm 31:27.7)**
+**Tokyo, women's TT specialist (loop; calm 31:27.4)**
 
 | Wind | N | NE | E | SE | S | SW | W | NW |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2 m/s | +7 | -10 | -19 | -15 | +2 | +24 | +34 | +25 |
-| 4 m/s | +23 | -4 | -22 | -20 | +13 | +61 | +82 | +61 |
-| 6 m/s | +49 | +18 | -7 | -14 | +33 | +110 | +146 | +105 |
+| 4 m/s | +23 | -4 | -22 | -20 | +13 | +61 | +83 | +61 |
+| 6 m/s | +49 | +18 | -7 | -14 | +33 | +111 | +146 | +105 |
 
 * On the point-to-point Flanders course, which runs from the coast inland
   to the south-west, wind dominates everything else. A 6 m/s wind from the
@@ -324,7 +327,7 @@ day, in seconds, by the direction the wind blows from:
   fully, and the climb faces one way. Wind from the east or south-east
   helps slightly, up to 22 s,
   while a 6 m/s westerly costs about 2.5 minutes.
-* Pacing saves 68–92 s on Flanders and 79–93 s on
+* Pacing saves 68–92 s on Flanders and 79–94 s on
   Tokyo across all these winds. The optimal rider pushes into the headwind
   and saves energy in the tailwind.
 

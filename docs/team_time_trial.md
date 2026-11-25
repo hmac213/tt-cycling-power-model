@@ -65,19 +65,20 @@ Two practical approaches:
 ## Back-of-envelope result
 
 Using the equal-share approximation with six copies of our TT specialist on
-flat, windless roads ($\bar d \approx 0.60$):
+flat, windless roads at sea level ($\rho = 1.20$ kg/m³, $\bar d \approx 0.60$):
 
 | Group | Average drag factor | Steady speed at CP |
 | --- | --- | --- |
-| Rider alone | 1.00 | 53.1 km/h |
-| 4 riders | 0.67 | 60.5 km/h |
-| 6 riders | 0.60 | 62.5 km/h |
+| Rider alone | 1.00 | 50.8 km/h |
+| 4 riders | 0.67 | 57.7 km/h |
+| 6 riders | 0.60 | 59.8 km/h |
 
-At 62.5 km/h the leader needs about 640 W, well above the specialist's CP of
-410 W, so every pull drains W′ and every spell in the line refills it. That
-is exactly the spend-and-recover balance the CP/W′ model describes, and it
-means the pull length is limited by W′. A 230 W excess over CP empties
-22 kJ in about 95 s, so pulls should be well under a minute and a half.
+At 59.8 km/h the leader needs about 620 W of pedal power, well above the
+specialist's CP of 400 W, so every pull drains W′ and every spell in the line
+refills it. That is exactly the spend-and-recover balance the CP/W′ model
+describes, and it means the pull length is limited by W′. A 220 W excess
+over CP empties 31.8 kJ in about 2.4 minutes, so pulls should be well under
+two minutes.
 Dropping to four riders late in the race costs about 2 km/h. Riders 5 and 6
 should therefore stay as long as they can contribute, and spend everything
 they have left in long final pulls before they are released.

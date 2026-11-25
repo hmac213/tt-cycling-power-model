@@ -108,13 +108,13 @@ Measured on `technical.gpx` with the TT specialist:
 
 | Step length | Steps | Optimal time | Run time |
 | --- | --- | --- | --- |
-| 80 m | 100 | 9:29.1 | 1.5 s |
-| 40 m | 200 | 9:26.8 | 3 s |
-| 20 m | 400 | 9:27.3 | 6 s |
-| 10 m | 799 | 9:26.8 | 12 s |
-| 5 m | 1598 | 9:26.5 | 25 s |
+| 80 m | 100 | 9:39.9 | 1.4 s |
+| 40 m | 200 | 9:38.0 | 3 s |
+| 20 m | 400 | 9:38.5 | 6 s |
+| 10 m | 799 | 9:38.1 | 12 s |
+| 5 m | 1598 | 9:37.9 | 25 s |
 
-- From 40 m down, the time moves by less than 1 s in 9.5 minutes.
+- From 40 m down, the time moves by less than 1 s in 9.6 minutes.
 - Doubling every grid of the dynamic program changes its time by 0.06 s.
 - The polish improves on the dynamic program by about 0.1 s and gives a much
   smoother power trace.

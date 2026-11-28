@@ -10,8 +10,9 @@ a fixed plan but
 
 The rider still cannot spend reserve they do not have. On any step where the
 requested power would take B below zero, they ride the largest power that
-leaves B at zero instead (never less than CP), which is what an exhausted
-rider is forced to do. Many rides are simulated at once as a batch.
+leaves B at zero instead (never less than their current critical power),
+which is what an exhausted rider is forced to do. Many rides are simulated
+at once as a batch.
 """
 
 import dataclasses
@@ -37,7 +38,9 @@ class BatchRide:
         power: Power actually ridden [W], shape (k, n).
         speed: Speed at each node [m/s], shape (k, n + 1).
         time: Elapsed time at each node [s], shape (k, n + 1).
-        reserve: Reserve at each node [J], shape (k, n + 1).
+        reserve: Fast reserve B at each node [J], shape (k, n + 1).
+        critical_power: Current critical power at each node [W], shape
+            (k, n + 1).
         exhausted: Fraction of steps on which the rider had to back off
             because the reserve was empty, shape (k,).
     """
@@ -47,6 +50,7 @@ class BatchRide:
     speed: np.ndarray
     time: np.ndarray
     reserve: np.ndarray
+    critical_power: np.ndarray
     exhausted: np.ndarray
 
     @property
@@ -134,51 +138,54 @@ def ride_plan(
 
     target = np.clip(plan * (1.0 + relative_error), 0.0, rider.p_max)
     speed = np.empty((num_rides, num_steps + 1))
-    time = np.empty_like(speed)
-    reserve = np.empty_like(speed)
+    time = np.zeros_like(speed)
+    deficit = np.zeros_like(speed)
+    fatigue = np.zeros_like(speed)
+    work = np.zeros_like(speed)
     power = np.empty((num_rides, num_steps))
     capped = np.zeros((num_rides, num_steps), bool)
     speed[:, 0] = grid.start_speed
-    time[:, 0] = 0.0
-    reserve[:, 0] = rider.w_prime
 
     for i in range(num_steps):
-        step_rider = cp_model.at_step(rider, i)
 
         def outcome(p):
             end_speed, duration, _ = simulate.advance(
                 speed[:, i], p, i, grid, physics, config
             )
-            end_reserve = cp_model.step_reserve(
-                reserve[:, i], p, duration, step_rider
+            state = cp_model.step_state(
+                deficit[:, i], fatigue[:, i], work[:, i], p, duration, rider
             )
-            return end_speed, duration, end_reserve
+            return end_speed, duration, state
 
         p = target[:, i]
-        end_speed, duration, end_reserve = outcome(p)
-        short = end_reserve < 0
+        end_speed, duration, state = outcome(p)
+        short = state[0] > 1.0
         if short.any():
-            # Largest power in [CP, target] that leaves B >= 0, by bisection.
-            low = np.full(num_rides, step_rider.cp)
+            # Largest power in [CP, target] that leaves B >= 0, by
+            # bisection. Riding at the current CP leaves B unchanged.
+            low = cp_model.critical_power(fatigue[:, i], rider)
             high = p.copy()
             for _ in range(_CAP_ITERATIONS):
                 middle = 0.5 * (low + high)
-                ok = outcome(middle)[2] >= 0
+                ok = outcome(middle)[2][0] <= 1.0
                 low = np.where(ok, middle, low)
                 high = np.where(ok, high, middle)
             p = np.where(short, np.minimum(low, p), p)
             capped[:, i] = short
-            end_speed, duration, end_reserve = outcome(p)
+            end_speed, duration, state = outcome(p)
         power[:, i] = p
         speed[:, i + 1] = end_speed
         time[:, i + 1] = time[:, i] + duration
-        reserve[:, i + 1] = np.maximum(end_reserve, 0.0)
+        deficit[:, i + 1] = np.minimum(state[0], 1.0)
+        fatigue[:, i + 1] = state[1]
+        work[:, i + 1] = state[2]
 
     return BatchRide(
         distance=grid.nodes,
         power=power,
         speed=speed,
         time=time,
-        reserve=reserve,
+        reserve=(1.0 - deficit) * cp_model.reserve_capacity(work, rider),
+        critical_power=cp_model.critical_power(fatigue, rider),
         exhausted=capped.mean(axis=1),
     )

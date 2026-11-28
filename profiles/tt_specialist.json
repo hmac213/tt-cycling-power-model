@@ -6,10 +6,19 @@
   "cda_m2": 0.211,
   "crr": 0.0032,
   "power": {
-    "cp_w": 400,
-    "w_prime_j": 31800,
+    "lt1_w": 309,
+    "lt2_w": 412,
+    "w_prime_j": 28750,
     "p_max_w": 1306,
     "recovery_alpha": 1.0,
-    "recovery_beta": 1.0
+    "recovery_beta": 1.0,
+    "fatigue_exponent": 1.7,
+    "fatigue_time_s": 3000,
+    "w_prime_work_scale_j_per_kg": 57400,
+    "best_efforts": [
+      [300, 503],
+      [600, 455],
+      [1200, 426]
+    ]
   }
 }

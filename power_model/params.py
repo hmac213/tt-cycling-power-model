@@ -5,26 +5,49 @@ import dataclasses
 
 @dataclasses.dataclass(frozen=True)
 class RiderParams:
-    """Parameters of the Critical Power / W' model.
+    """Parameters of the two-reserve stamina model.
+
+    The rider has a fast, rechargeable reserve above their current critical
+    power, and a slow durability reserve that only drains. See
+    power_model/README.md for the equations.
 
     Attributes:
-        cp: Critical power CP, the sustainable aerobic threshold [W].
-        w_prime: Anaerobic work capacity above CP, W' [J].
+        lt1: First lactate threshold, LT1 [W]. Riding below it causes no
+            lasting fatigue, and critical power never falls below it.
+        lt2: Second lactate threshold, LT2 [W], taken as the critical power
+            of the fresh rider, CP_0.
+        w_prime: Work capacity above critical power when fresh, W'_0 [J].
         p_max: Hard cap on instantaneous power [W].
         alpha: Recovery rate coefficient [-].
         beta: Recovery saturation exponent [-].
-        fatigue_rate: How fast CP declines once the race is long, k [-].
-            CP(t) = CP (1 - k ln(t / t0)) for t > t0. Zero turns fatigue off.
-        fatigue_onset: Elapsed time t0 after which CP starts to decline [s].
-        cp_scale: Per-step multipliers on CP, one per grid step, or None.
-            The solver fills this in from the fatigue law; leave it unset.
+        fatigue_exponent: How steeply fatigue grows with intensity,
+            gamma [-].
+        fatigue_time: Fatigue at which critical power has lost 63% of the
+            span between LT2 and LT1, tau_F [s]. Fatigue is counted in
+            seconds ridden at LT2. Infinity turns the loss of critical
+            power off.
+        work_capacity: Work done at which W' has fallen to 37% of its
+            fresh value, E_W [J]. Infinity turns the loss of W' off.
     """
 
-    cp: float = 300.0
+    lt1: float = 225.0
+    lt2: float = 300.0
     w_prime: float = 20_000.0
     p_max: float = 900.0
     alpha: float = 1.0
     beta: float = 1.0
-    fatigue_rate: float = 0.0
-    fatigue_onset: float = 1800.0
-    cp_scale: tuple[float, ...] | None = None
+    fatigue_exponent: float = 1.7
+    fatigue_time: float = 3000.0
+    work_capacity: float = 4.3e6
+
+    def __post_init__(self):
+        if not 0 < self.lt1 < self.lt2 <= self.p_max:
+            raise ValueError(
+                "Need 0 < lt1 < lt2 <= p_max, got "
+                f"{self.lt1}, {self.lt2}, {self.p_max}."
+            )
+
+    @property
+    def cp(self) -> float:
+        """Critical power of the fresh rider, CP_0 = LT2 [W]."""
+        return self.lt2

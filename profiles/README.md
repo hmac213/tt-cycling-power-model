@@ -9,7 +9,7 @@ from profiles import rider
 
 profile = rider.load("tt_specialist")      # or a path to any profile JSON
 physics = profile.physics_params()         # mass, CdA, Crr filled in
-power = profile.rider_params()             # CP, W', P_max, alpha, beta
+power = profile.rider_params()             # LT1, LT2, W', P_max, fatigue
 ```
 
 `run_baseline.py --profile climber` does the same from the command line.
@@ -26,17 +26,20 @@ value, its source and the fits are in [SOURCES.md](SOURCES.md).
 | Bike mass [kg] | 8.5 | 7.5 | 8.5 | 7.5 |
 | $C_dA$ [m²] | 0.211 | 0.217 | 0.188 | 0.193 |
 | $C_{rr}$ | 0.0032 | 0.0032 | 0.0032 | 0.0032 |
-| $CP$ [W] | 400 | 359 | 298 | 255 |
-| $W'$ [kJ] | 31.8 | 27.5 | 27.8 | 16.1 |
+| LT1 [W] | 309 | 278 | 230 | 196 |
+| LT2 = fresh $CP$ [W] | 412 | 370 | 307 | 261 |
+| $W'$ [kJ] | 28.75 | 24.1 | 25.7 | 14.9 |
 | $P_\text{max}$ [W] | 1306 | 1137 | 944 | 822 |
-| $CP$ per kg of rider [W/kg] | 5.51 | 5.68 | 4.83 | 4.75 |
-| $CP$ per kg of rider + bike [W/kg] | 4.93 | 5.08 | 4.25 | 4.17 |
-| $CP / C_dA$ [W/m²] | 1896 | 1654 | 1585 | 1321 |
+| Fresh $CP$ per kg of rider [W/kg] | 5.67 | 5.85 | 4.98 | 4.86 |
+| Fresh $CP$ per kg of rider + bike [W/kg] | 5.08 | 5.23 | 4.37 | 4.26 |
+| Fresh $CP / C_dA$ [W/m²] | 1953 | 1705 | 1633 | 1352 |
 
 **Sources in brief.** Men's mass and power: Valenzuela et al. (2022), record
 power profiles of 144 professionals by rider type. Women's power: Mateo-March
-et al. (2022); women's mass scaled from Ebert et al. (2005). CP and W′ are
-linear fits W = CP·t + W′ to the 5, 10 and 20 min maximal mean powers.
+et al. (2022); women's mass scaled from Ebert et al. (2005). LT2 and W′ are
+fitted so that the stamina model reproduces the 5, 10 and 20 min maximal
+mean powers; LT1 is assumed to be 75% of LT2. The fatigue parameters are
+population values (see [../power_model/README.md](../power_model/README.md)).
 Time trialists' $C_dA$: 0.211 m² in a time-trial position, wind tunnel
 (Defraeye et al. 2010), scaled by frontal area for the women. Climbers'
 $C_dA$: the Garcia-Lopez et al. (2014) professional value (0.237 m²) scaled
@@ -61,17 +64,26 @@ time trialist has more power per unit of drag.
   "cda_m2": 0.19,
   "crr": 0.003,
   "power": {
-    "cp_w": 410.0,
-    "w_prime_j": 22000.0,
-    "p_max_w": 1300.0,
+    "lt1_w": 309,
+    "lt2_w": 412,
+    "w_prime_j": 28750,
+    "p_max_w": 1306,
     "recovery_alpha": 1.0,
-    "recovery_beta": 1.0
+    "recovery_beta": 1.0,
+    "fatigue_exponent": 1.7,
+    "fatigue_time_s": 3000,
+    "w_prime_work_scale_j_per_kg": 57400,
+    "best_efforts": [[300, 503], [600, 455], [1200, 426]]
   }
 }
 ```
 
-`description`, `recovery_alpha`, and `recovery_beta` are optional (the last two
-default to 1). Unknown keys, missing keys, and non-positive numbers are
+Only `lt1_w`, `lt2_w`, `w_prime_j` and `p_max_w` are required in `power`.
+The recovery numbers default to 1 and the three fatigue numbers to the
+values shown. `best_efforts` lists the (duration in seconds, power in watts)
+pairs the numbers were fitted to; it is kept for reference and for the test
+that checks the fit, and the model does not read it. `description` is
+optional too. Unknown keys, missing keys, and non-positive numbers are
 rejected with an error that names the key.
 
 ## What is not in a profile
@@ -90,7 +102,9 @@ conditions, not the rider, so they stay in `PhysicsParams`. Pass a base to
 - **Bike masses are assumed.** No peer-reviewed source was found.
 - **One $C_dA$ per rider.** The rider holds one position on every course,
   including climbs, where real riders sit up.
-- **The power profile is CP, $W'$, and $P_\text{max}$.** No full power-duration
-  curve is stored. All riders use the same recovery law ($\alpha = \beta = 1$).
+- **LT1 is assumed** to be 75% of LT2 for every profile.
+- **The fatigue numbers are shared.** All riders use the same $\gamma$,
+  $\tau_F$, $E_W$ per kilogram, and recovery law ($\alpha = \beta = 1$).
+  Only the 5 to 20 min powers are fitted per profile.
 - **Same tyres and same grip.** All profiles use $C_{rr} = 0.0032$ and corner
   equally well.

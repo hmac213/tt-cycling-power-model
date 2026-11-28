@@ -26,24 +26,30 @@ are scaled from the men's type differences.
 | tt_specialist | bike mass | 8.5 kg | A | – | TT bike with disc and deep front wheel; UCI minimum 6.8 kg |
 | tt_specialist | $C_dA$ | 0.211 m² | M | Defraeye 2010 | Wind tunnel, time-trial position |
 | tt_specialist | $C_{rr}$ | 0.0032 | M | Martin 1998 (citing Kyle 1988) | Mean of 10 high-pressure clinchers on smooth asphalt (0.0027–0.0040) |
-| tt_specialist | CP | 400 W | D | Valenzuela 2022, Table 1, p75 absolute | Linear fit at 5/10/20 min. Cross-check: Horvath & Andersson 2025, 395.3 W |
-| tt_specialist | W′ | 31.8 kJ | D | same fit | Intercept of the fit |
+| tt_specialist | LT2 ($CP_0$) | 412 W | D | Valenzuela 2022, Table 1, p75 absolute | Fit through the stamina model at 5/10/20 min (see below). The plain linear fit gives 400 W; cross-check: Horvath & Andersson 2025, 395.3 W |
+| tt_specialist | LT1 | 309 W | A | – | 75% of LT2 |
+| tt_specialist | W′ | 28.75 kJ | D | same fit | The plain linear fit gives 31.8 kJ |
 | tt_specialist | $P_\text{max}$ | 1306 W | D | Valenzuela 2022, 5 s p50 relative (17.99 W/kg) × 72.6 kg | |
 | climber | rider mass | 63.2 kg | M | Valenzuela 2022, Table 3 | Climbers, n = 50, 63.2 ± 4.4 kg |
 | climber | bike mass | 7.5 kg | A | – | Lighter TT setup for hilly courses |
 | climber | $C_dA$ | 0.217 m² | D | Garcia-Lopez 2014 (0.237 m²) × frontal-area ratio | Frontal area 0.185 × body surface area (Padilla 1999), Du Bois formula |
-| climber | CP | 359 W | D | Valenzuela 2022, Table 1, p50 relative (7.06/6.45/6.03 W/kg) × 63.2 kg | Cross-check: Horvath & Andersson 2025, 354.1 W |
-| climber | W′ | 27.5 kJ | D | same fit | |
+| climber | LT2 ($CP_0$) | 370 W | D | Valenzuela 2022, Table 1, p50 relative (7.06/6.45/6.03 W/kg) × 63.2 kg | Fit through the stamina model. Plain linear fit: 359 W; cross-check: Horvath & Andersson 2025, 354.1 W |
+| climber | LT1 | 278 W | A | – | 75% of LT2 |
+| climber | W′ | 24.1 kJ | D | same fit | Plain linear fit: 27.5 kJ |
 | climber | $P_\text{max}$ | 1137 W | D | 17.99 W/kg × 63.2 kg | |
 | tt_specialist_women | rider mass | 61.7 kg | D | Ebert 2005 (57.9 kg, n = 15) × men's TT / average mass ratio (1.066) | |
 | tt_specialist_women | $C_dA$ | 0.188 m² | D | 0.211 m² × frontal-area ratio | Height 172.4 cm, scaled from Ebert 2005 |
-| tt_specialist_women | CP | 298 W | D | Mateo-March 2022, P75 at 5/10/20 min (6.3/5.6/5.2 W/kg) × 61.7 kg | |
-| tt_specialist_women | W′ | 27.8 kJ | D | same fit | |
+| tt_specialist_women | LT2 ($CP_0$) | 307 W | D | Mateo-March 2022, P75 at 5/10/20 min (6.3/5.6/5.2 W/kg) × 61.7 kg | Fit through the stamina model. Plain linear fit: 298 W |
+| tt_specialist_women | LT1 | 230 W | A | – | 75% of LT2 |
+| tt_specialist_women | W′ | 25.7 kJ | D | same fit | Plain linear fit: 27.8 kJ |
 | tt_specialist_women | $P_\text{max}$ | 944 W | D | Mateo-March 2022, 5 s mean 15.3 W/kg × 61.7 kg | |
 | climber_women | rider mass | 53.7 kg | D | 57.9 kg × men's climber / average mass ratio (0.928) | |
 | climber_women | $C_dA$ | 0.193 m² | D | 0.237 m² × frontal-area ratio | Height 165.8 cm |
-| climber_women | CP | 255 W | D | Mateo-March 2022, P50 × 53.7 kg | 4.75 W/kg, below the women's specialist (see below) |
-| climber_women | W′ | 16.1 kJ | D | same fit | |
+| climber_women | LT2 ($CP_0$) | 261 W | D | Mateo-March 2022, P50 × 53.7 kg | Fit through the stamina model to the 5/10/20 min powers implied by the plain fit (255 W, 16.1 kJ). 4.86 W/kg, below the women's specialist (see below) |
+| climber_women | LT1 | 196 W | A | – | 75% of LT2 |
+| climber_women | W′ | 14.9 kJ | D | same fit | Plain linear fit: 16.1 kJ |
+| all | $\gamma$, $\tau_F$ | 1.7, 3000 s | D | Clark 2019, Mateo-March 2024 | Population values, not per rider; see [../power_model/README.md](../power_model/README.md) and [../SOURCES.md](../SOURCES.md) |
+| all | $E_W$ | 57.4 kJ per kg of body mass | D | Clark 2019 | Same |
 | climber_women | $P_\text{max}$ | 822 W | D | 15.3 W/kg × 53.7 kg | |
 
 All profiles use $C_{rr}$ = 0.0032 (Martin 1998). The women's bike masses
@@ -53,9 +59,9 @@ Table 3.
 
 ## CP and W′ fits
 
-W = CP·t + W′, least squares at t = 300, 600 and 1200 s; every R² > 0.999.
-The 3-minute value is not in either source's tables, so the fit uses
-5–20 min only.
+**Step 1, the plain fit.** W = CP·t + W′, least squares at t = 300, 600 and
+1200 s; every R² > 0.999. The 3-minute value is not in either source's
+tables, so the fit uses 5–20 min only.
 
 | Profile | Input rows | P at 5/10/20 min (W) | CP (W) | W′ (J) |
 | --- | --- | --- | --- | --- |
@@ -63,6 +69,22 @@ The 3-minute value is not in either source's tables, so the fit uses
 | climber | Valenzuela Table 1, p50 relative × 63.2 kg | 446.2 / 407.6 / 381.1 | 358.7 | 27,492 |
 | tt_specialist_women | Mateo-March P75 × 61.7 kg | 388.7 / 345.5 / 320.8 | 297.9 | 27,765 |
 | climber_women | Mateo-March P50 × 53.7 kg | – | 255 | 16,100 |
+
+**Step 2, the fit through the stamina model.** The plain fit assumes that
+critical power stays fixed during an effort. The stamina model has it sink
+as fatigue builds, so using the plain-fit CP as the fresh critical power
+would count that fatigue twice. `power_model/calibrate.py` therefore fits
+LT2 and W′ so that the model's own power-duration curve passes through the
+same 5/10/20 min powers, with LT1 held at 75% of LT2 and $\gamma$, $\tau_F$,
+$E_W$ at their population values. These are the values in the profiles.
+Each profile stores the three powers it was fitted to as `best_efforts`.
+
+| Profile | LT2 (W) | LT1 (W) | W′ (J) | Model minus data at 5/10/20 min (W) |
+| --- | --- | --- | --- | --- |
+| tt_specialist | 412 | 309 | 28,750 | +0.2 / −0.9 / +0.4 |
+| climber | 370 | 278 | 24,100 | +0.3 / −2.4 / +0.7 |
+| tt_specialist_women | 307 | 230 | 25,710 | −0.3 / −0.7 / −0.3 |
+| climber_women | 261 | 196 | 14,890 | −0.2 / +1.1 / −0.3 |
 
 ## Choices and open points
 
@@ -87,6 +109,12 @@ The 3-minute value is not in either source's tables, so the fit uses
    model used here. Best-ever efforts from different days tend to inflate W′.
 5. **Bike masses are assumed.** No peer-reviewed source for as-raced TT bike
    mass was found.
+6. **LT1 is assumed.** No lactate data by rider type were found, so LT1 is
+   set to 75% of LT2 for every profile. It matters: LT1 is where fatigue
+   starts and the floor critical power sinks towards.
+7. **No long efforts in the fit.** Powers for an hour or more would let
+   $\tau_F$ (and with two of them $\gamma$) be fitted per profile. *To
+   check:* whether the record power profile tables go that far.
 
 ## References
 

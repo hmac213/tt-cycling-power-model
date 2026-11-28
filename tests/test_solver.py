@@ -20,7 +20,7 @@ _CONFIG = simulate.SimConfig()
 # Coarse settings that keep the optimization tests quick.
 _COARSE_CONFIG = simulate.SimConfig(step_length=40.0)
 _COARSE_DP = dynamic_program.DpConfig(
-    num_speeds=50, num_reserves=40, num_powers=17
+    num_speeds=40, num_deficits=30, num_fatigues=6, num_powers=17
 )
 
 
@@ -144,7 +144,8 @@ class DynamicProgramTest(unittest.TestCase):
         self.assertEqual(levels.size, 17)
         self.assertEqual(levels[0], 0.0)
         self.assertEqual(levels[-1], _RIDER.p_max)
-        self.assertIn(_RIDER.cp, levels)
+        self.assertIn(_RIDER.lt1, levels)
+        self.assertIn(_RIDER.lt2, levels)
         self.assertTrue(np.all(np.diff(levels) > 0))
 
     def test_plan_is_feasible_and_beats_constant_power(self):

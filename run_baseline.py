@@ -130,7 +130,8 @@ def _describe_profile(profile: rider_profiles.RiderProfile) -> None:
     print(
         f"Rider '{profile.name}': {profile.rider_mass:.0f} kg + "
         f"{profile.bike_mass:.0f} kg bike, CdA {profile.cda:.2f} m^2, "
-        f"CP {profile.cp:.0f} W ({profile.cp_per_kg:.2f} W/kg), "
+        f"LT1 {profile.lt1:.0f} W, LT2 {profile.lt2:.0f} W "
+        f"({profile.cp_per_kg:.2f} W/kg), "
         f"W' {profile.w_prime / 1000:.0f} kJ, P_max {profile.p_max:.0f} W"
     )
 
@@ -144,7 +145,8 @@ def _describe_ride(label: str, ride: simulate.RideResult) -> None:
         f"({ride.total_time:8.2f} s)  mean power {mean_power:5.1f} W  "
         f"avg speed {mean_speed:5.2f} km/h  "
         f"braked {ride.brake_energy.sum() / 1000:5.2f} kJ  "
-        f"final B {ride.reserve[-1] / 1000:5.2f} kJ"
+        f"final B {ride.reserve[-1] / 1000:5.2f} kJ  "
+        f"final CP {ride.critical_power[-1]:5.1f} W"
     )
 
 
@@ -163,6 +165,9 @@ def _write_tables(
         ride.speed[1:],
         ride.time[1:],
         ride.reserve[1:],
+        ride.critical_power[1:],
+        ride.capacity[1:],
+        ride.fatigue[1:],
         ride.brake_energy,
     ])
     np.savetxt(
@@ -173,7 +178,8 @@ def _write_tables(
         comments="",
         header=(
             "start_m,end_m,power_w,end_speed_mps,end_time_s,"
-            "end_reserve_j,brake_energy_j"
+            "end_reserve_j,end_critical_power_w,end_capacity_j,"
+            "end_fatigue_s,brake_energy_j"
         ),
     )
     profile = np.column_stack([
@@ -262,11 +268,20 @@ def _plot(
         optimal.power, ride_km, baseline=None, color=_OPTIMAL_COLOR,
         linewidth=2, label="Optimal",
     )
+    power_axes.plot(
+        ride_km, optimal.critical_power, color=_MUTED_COLOR, linewidth=0.8,
+        linestyle=":",
+    )
     power_axes.axhline(
-        rider.cp, color=_MUTED_COLOR, linewidth=0.8, linestyle=":"
+        rider.lt1, color=_MUTED_COLOR, linewidth=0.8, linestyle=":"
     )
     power_axes.annotate(
-        "CP", (ride_km[-1], rider.cp), xytext=(6, 0),
+        "LT1", (ride_km[-1], rider.lt1), xytext=(6, 0),
+        textcoords="offset points", va="center", fontsize=9,
+        color=_MUTED_COLOR, annotation_clip=False,
+    )
+    power_axes.annotate(
+        "CP", (ride_km[-1], optimal.critical_power[-1]), xytext=(6, 0),
         textcoords="offset points", va="center", fontsize=9,
         color=_MUTED_COLOR, annotation_clip=False,
     )
@@ -297,7 +312,7 @@ def _plot(
     reserve_axes.plot(
         ride_km, optimal.reserve / 1000, color=_OPTIMAL_COLOR, linewidth=2
     )
-    _style_axes(reserve_axes, "Anaerobic reserve B (kJ)")
+    _style_axes(reserve_axes, "Fast reserve B (kJ)")
     reserve_axes.set_xlabel("Distance (km)", color=_MUTED_COLOR, fontsize=9)
 
     saved = constant.total_time - optimal.total_time

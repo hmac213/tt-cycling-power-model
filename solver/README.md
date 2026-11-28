@@ -29,31 +29,50 @@ is capped at the envelope $V$, and the kinetic energy removed is recorded as
 braking. Time is the integral of $ds / v_b$ over 8 pieces per step, with
 $v_b^3$ taken as linear in $s$ on each piece, which gives
 $\Delta t = \tfrac32 h\,(a + b)/(a^2 + ab + b^2)$ for speeds $a, b$ at the two
-ends of a piece. $B$ is then updated exactly over the step's duration.
+ends of a piece. The stamina state (deficit $x$, fatigue $F$, work $E$; see
+[../power_model/README.md](../power_model/README.md)) is then updated over
+the step's duration, with critical power and reserve capacity taken from
+the start of the step.
 
 **Optimize** (`optimize.py`) runs two stages.
 
-1. **Dynamic programming** (`dynamic_program.py`). Let $J_k(v, B)$ be the
-   least time to the finish from node $k$ at speed $v$ with reserve $B$. Then
-   $J_n = 0$ and
+1. **Dynamic programming** (`dynamic_program.py`). Let $J_k(v, x, F)$ be the
+   least time to the finish from node $k$ at speed $v$, with deficit $x$ of
+   the fast reserve and fatigue $F$. Then $J_n = 0$ and
 
-   $$J_k(v, B) = \min_{P} \big[\, \Delta t(v, P) + J_{k+1}(v', B') \,\big], \qquad B' \ge 0.$$
+   $$J_k(v, x, F) = \min_{P} \big[\, \Delta t(v, P) + J_{k+1}(v', x', F') \,\big], \qquad x' \le 1.$$
 
-   $J$ is tabulated backwards from the finish on a grid of 80 speeds and 60
-   reserves, trying 25 power levels at every grid point. The plan is then read
-   off by riding forwards from the start and taking the best power at each
-   step. This looks at every plan the grids can express, so it needs no
-   starting guess and cannot get stuck in a local optimum. Its answer is
-   rounded to the grids.
-2. **Collocation** (`collocation.py`). Speed, reserve, and power at every node
-   become the unknowns of one sparse nonlinear program, with the dynamics as
-   constraints between neighbouring nodes. IPOPT solves it with exact
-   derivatives from CasADi, starting from the dynamic program's plan. This
-   removes the rounding. The result is kept only if the simulator confirms it
-   is feasible and no slower than stage 1.
+   $J$ is tabulated backwards from the finish on a grid of 50 speeds, 40
+   deficits and 12 fatigues, trying 25 power levels at every grid point. The
+   plan is then read off by riding forwards from the start and taking the
+   best power at each step. This looks at every plan the grids can express,
+   so it needs no starting guess and cannot get stuck in a local optimum.
+   Its answer is rounded to the grids.
+2. **Collocation** (`collocation.py`). Speed, the three stamina states, and
+   power at every node become the unknowns of one sparse nonlinear program,
+   with the dynamics as constraints between neighbouring nodes. IPOPT solves
+   it with exact derivatives from CasADi, starting from the dynamic
+   program's plan. This removes the rounding. The result is kept only if the
+   simulator confirms it is feasible and no slower than stage 1.
 
-`optimize.constant_power_ride` finds the constant power that empties $W'$
-exactly at the finish. It is the benchmark.
+`optimize.constant_power_ride` finds the highest constant power that never
+overdraws the fast reserve. It is the benchmark.
+
+### The work state in the dynamic program
+
+The stamina model has three states, but the table has only two of them as
+dimensions. The work done $E$ only sets the size $W'$ of the fast reserve,
+and how much work has been done by a given point on the course hardly
+depends on the pacing. So the table is built with $W'$ at each step taken
+from a reference ride (the constant-power ride), while the forward ride
+tracks $E$ exactly. If $W'$ along the forward ride differs from the
+reference by more than 1% anywhere, the table is rebuilt with the forward
+ride as the new reference. The collocation stage and the simulator carry
+$E$ exactly, so the final plan obeys the full model.
+
+Fatigue $F$ is different: it depends strongly on the pacing and is the main
+trade-off the optimizer makes over a long race, so it is a full dimension
+of the table.
 
 ### Details of the collocation stage
 
@@ -61,22 +80,15 @@ exactly at the finish. It is the benchmark.
   $v_{k+1}^3 \le$ (RK4 result). The gap is the kinetic energy braked away, so
   no separate brake variable is needed. The corner limit is a plain bound,
   $v_{k+1} \le V$.
-- **The kink at $P = CP$.** Power is written $P = CP\,(1 - r + e)$ with
-  $r, e \ge 0$, where draining depends only on $e$ and recovery only on $r$.
-  Both pieces are smooth. Using both at once never pays as long as
-  $\alpha \le 1$, so the optimum has $r\,e = 0$ on its own.
+- **The kink at $P = CP$.** Besides the power $P$ there is a second unknown
+  per step, $e \ge \max(P - CP, 0)$, the power counted as above critical
+  power. Draining depends only on $e$ and recovery only on $CP - P + e$, and
+  both pieces are smooth. Choosing $e$ larger than it must be never pays as
+  long as $\alpha \le 1$, so the optimum has $e = \max(P - CP, 0)$ on its
+  own.
 - **Same equations as the simulator.** The transcription reuses the
   simulator's RK4 substeps, time rule, and stamina update, so the polished
   plan is verified by simply simulating it.
-
-### Fatigue
-
-When `RiderParams.fatigue_rate > 0`, CP depends on elapsed time, and elapsed
-time depends on the plan. `optimize` alternates the two. It fixes CP on
-every step from the previous ride's times (`cp_scale`), solves with that
-fixed CP, and repeats until no step's CP changes by more than 0.01%
-(usually 2–4 rounds). The simulator, the dynamic program, and the
-collocation stage all read CP per step through `cp_model.at_step`.
 
 ### Imperfect execution (`execution.py`)
 
@@ -96,11 +108,11 @@ once and reports split times at any distances.
 | `initial_speed` | `SimConfig` | Speed at the start line [m/s] | 0 (standing start) |
 | `min_speed` | `SimConfig` | Speed floor [m/s] | 0.5 |
 | `corner_window` | `SimConfig` | Curvature averaging length for the corner limit [m] | 20 |
-| `num_speeds`, `num_reserves`, `num_powers` | `DpConfig` | Grid sizes of the dynamic program | 80, 60, 25 |
+| `num_speeds`, `num_deficits`, `num_fatigues`, `num_powers` | `DpConfig` | Grid sizes of the dynamic program | 50, 40, 12, 25 |
 | `rollout_refinement` | `DpConfig` | Extra power levels tried in the forward ride | 4x |
 
-Run time grows in proportion to course length: about 6 s for 8 km and 15 s for
-20 km.
+Run time grows in proportion to course length: about 20 s for 8 km, 50 s for
+20 km, and a few minutes for the 44 km championship courses.
 
 ## How accurate it is
 
@@ -108,18 +120,18 @@ Measured on `technical.gpx` with the TT specialist:
 
 | Step length | Steps | Optimal time | Run time |
 | --- | --- | --- | --- |
-| 80 m | 100 | 9:39.9 | 1.4 s |
-| 40 m | 200 | 9:38.0 | 3 s |
-| 20 m | 400 | 9:38.5 | 6 s |
-| 10 m | 799 | 9:38.1 | 12 s |
-| 5 m | 1598 | 9:37.9 | 25 s |
+| 80 m | 100 | 9:45.6 | 5 s |
+| 40 m | 200 | 9:43.8 | 9 s |
+| 20 m | 400 | 9:44.4 | 18 s |
+| 10 m | 799 | 9:44.0 | 39 s |
+| 5 m | 1598 | 9:43.7 | 77 s |
 
-- From 40 m down, the time moves by less than 1 s in 9.6 minutes.
-- Doubling every grid of the dynamic program changes its time by 0.06 s.
-- The polish improves on the dynamic program by about 0.1 s and gives a much
-  smoother power trace.
+- From 40 m down, the time moves by less than 1 s in 9.7 minutes.
+- Doubling every grid of the dynamic program changes its time by 0.13 s.
+- The polish improves on the dynamic program by 0.15 to 0.5 s on the five
+  demo courses and gives a smoother power trace.
 - On the hill and climb courses, re-integrating the final plans with 0.25 m
-  steps reproduces the reported times to within 3 ms.
+  substeps reproduces the reported times to within 3 ms.
 
 ## Assumptions
 
@@ -155,7 +167,10 @@ Measured on `technical.gpx` with the TT specialist:
   joule, the split-power form could create reserve from nothing, so only the
   dynamic program runs. The dynamic program itself then exploits the same
   loophole in the model by alternating hard and easy steps.
-- **Memory.** The value table holds (steps x 80 x 60) numbers, about 20 MB for
-  20 km and 100 MB for 100 km.
+- **Memory.** The value table holds (steps x 50 x 40 x 12) numbers, about
+  100 MB for 20 km and 210 MB for the 44 km championship courses.
+- **The table uses a reference for $W'$.** See "The work state in the
+  dynamic program" above. The forward ride, the polish and the simulator do
+  not.
 - **Corner timing.** The corner limit for a step is the lowest envelope value
   inside it, so a corner is entered up to one step early.

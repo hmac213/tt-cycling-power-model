@@ -1,4 +1,4 @@
-"""Tests of the extensions: fatigue, imperfect execution, race courses."""
+"""Tests of the extensions: durability, imperfect execution, race courses."""
 
 import dataclasses
 import pathlib
@@ -8,7 +8,6 @@ import numpy as np
 
 from course_loader import gpx
 from physics_model import params as physics_params
-from power_model import cp_model
 from power_model import params as rider_params
 from profiles import rider as rider_profiles
 from solver import execution
@@ -21,32 +20,42 @@ _RIDER = rider_params.RiderParams()
 _COURSES = pathlib.Path(__file__).resolve().parent.parent / "courses"
 
 
-class FatigueTest(unittest.TestCase):
+class DurabilityTest(unittest.TestCase):
 
-    def test_factor_is_one_before_onset_and_declines_after(self):
-        rider = dataclasses.replace(_RIDER, fatigue_rate=0.07, fatigue_onset=1800.0)
-        factor = cp_model.fatigue_factor([0.0, 1800.0, 3600.0], rider)
-        np.testing.assert_allclose(factor[:2], 1.0)
-        self.assertAlmostEqual(factor[2], 1.0 - 0.07 * np.log(2.0))
+    def setUp(self):
+        # The same rider with the loss of durability switched off.
+        self.classic = dataclasses.replace(
+            _RIDER, fatigue_time=np.inf, work_capacity=np.inf
+        )
 
-    def test_no_fatigue_leaves_results_unchanged(self):
+    def test_short_ride_is_barely_affected(self):
         course = helpers.straight_course(3_000.0)
-        plain = optimize.constant_power_ride(course, _PHYSICS, _RIDER)
-        zero = dataclasses.replace(_RIDER, fatigue_rate=0.0)
-        same = optimize.constant_power_ride(course, _PHYSICS, zero)
-        self.assertAlmostEqual(plain.total_time, same.total_time)
+        full = optimize.constant_power_ride(course, _PHYSICS, _RIDER)
+        classic = optimize.constant_power_ride(course, _PHYSICS, self.classic)
+        self.assertGreaterEqual(full.total_time, classic.total_time)
+        self.assertLess(full.total_time, 1.01 * classic.total_time)
 
-    def test_fatigue_slows_the_constant_power_ride(self):
-        course = helpers.straight_course(6_000.0)
-        tired = dataclasses.replace(_RIDER, fatigue_rate=0.1, fatigue_onset=200.0)
-        fresh = optimize.constant_power_ride(course, _PHYSICS, _RIDER)
-        slow = optimize.constant_power_ride(course, _PHYSICS, tired)
-        self.assertGreater(slow.total_time, fresh.total_time)
+    def test_long_ride_is_slowed_and_ends_with_less_critical_power(self):
+        course = helpers.straight_course(30_000.0)
+        config = simulate.SimConfig(step_length=100.0)
+        full = optimize.constant_power_ride(course, _PHYSICS, _RIDER, config)
+        classic = optimize.constant_power_ride(
+            course, _PHYSICS, self.classic, config
+        )
+        self.assertGreater(full.total_time, classic.total_time + 5.0)
+        self.assertLess(full.critical_power[-1], _RIDER.lt2 - 5.0)
+        self.assertGreaterEqual(full.critical_power[-1], _RIDER.lt1)
+        self.assertLess(full.capacity[-1], _RIDER.w_prime)
+        np.testing.assert_allclose(classic.critical_power, _RIDER.lt2)
 
-    def test_at_step_scales_cp(self):
-        rider = dataclasses.replace(_RIDER, cp_scale=(1.0, 0.9))
-        self.assertEqual(cp_model.at_step(rider, 1).cp, 0.9 * _RIDER.cp)
-        self.assertIsNone(cp_model.at_step(rider, 1).cp_scale)
+    def test_ride_records_work_and_fatigue(self):
+        course = helpers.straight_course(3_000.0)
+        ride = optimize.constant_power_ride(course, _PHYSICS, _RIDER)
+        done = np.sum(ride.power * np.diff(ride.time))
+        self.assertAlmostEqual(ride.work[-1], done, delta=1e-6 * done)
+        self.assertTrue(np.all(np.diff(ride.fatigue) >= 0))
+        self.assertTrue(ride.feasible)
+        self.assertAlmostEqual(ride.deficit.max(), 1.0, places=4)
 
 
 class ExecutionTest(unittest.TestCase):

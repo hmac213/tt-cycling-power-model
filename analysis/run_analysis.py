@@ -10,13 +10,14 @@ Parts:
 
 * courses: every rider profile on the Tokyo and Flanders courses (men's or
   women's version to match the rider) and on our custom loop, optimal vs.
-  constant power, with and without long-race fatigue.
+  constant power, with the full stamina model and with the classic
+  Critical Power model (no loss of durability) for comparison.
 * wind: wind from 8 directions at 2, 4 and 6 m/s on a point-to-point course
   (Flanders) and a loop (Tokyo), re-optimized for each; plus a plan made for
   the forecast wind ridden in slightly different wind.
 * deviation: Monte Carlo of a rider missing their power targets by random
   and systematic errors, with the range of split times at key points.
-* fatigue: sensitivity of the Tokyo result to the fatigue rate.
+* fatigue: sensitivity of the Tokyo result to the fatigue time tau_F.
 
 Results go to outputs/analysis/ as JSON (summaries) and NPZ (full rides).
 The collocation polish runs if CasADi is installed; pass --no-polish to use
@@ -46,8 +47,9 @@ PROFILES = {
     "tt_specialist_women": "women",
     "climber_women": "women",
 }
-# Long-race fatigue used in the "with fatigue" runs.
-FATIGUE = dict(fatigue_rate=0.07, fatigue_onset=1800.0)
+# Rider overrides that turn the loss of durability off, which leaves the
+# classic Critical Power model. Used in the "classic" comparison runs.
+CLASSIC = dict(fatigue_time=1e9, work_capacity=1e15)
 
 POLISH = True
 
@@ -123,7 +125,7 @@ def _solve(job):
     )
     arrays = dict(
         distance=ride.distance, power=ride.power, speed=ride.speed,
-        time=ride.time, reserve=ride.reserve,
+        time=ride.time, reserve=ride.reserve, cp=ride.critical_power,
         c_power=constant.power, c_speed=constant.speed,
         c_time=constant.time, c_reserve=constant.reserve,
     )
@@ -152,10 +154,10 @@ def part_courses(workers):
     jobs = []
     for course, versions in COURSES.items():
         for profile, gender in PROFILES.items():
-            for fatigue in (None, FATIGUE):
+            for fatigue in (None, CLASSIC):
                 if fatigue and course == "custom":
-                    continue  # too short for fatigue to matter
-                tag = f"{course}__{profile}" + ("__fatigue" if fatigue else "")
+                    continue  # too short for durability to matter
+                tag = f"{course}__{profile}" + ("__classic" if fatigue else "")
                 jobs.append(dict(tag=tag, course=versions[gender],
                                  profile=profile, fatigue=fatigue))
     _run_jobs(jobs, "courses", workers)
@@ -312,9 +314,11 @@ def part_deviation(workers):
 
 def part_fatigue(workers):
     print("fatigue")
-    jobs = [dict(tag=f"k{rate:g}", course="tokyo_2021_men", profile="tt_specialist",
-                 fatigue=dict(fatigue_rate=rate, fatigue_onset=1800.0) if rate else None)
-            for rate in (0.0, 0.035, 0.07, 0.14)]
+    jobs = [dict(tag="classic", course="tokyo_2021_men",
+                 profile="tt_specialist", fatigue=CLASSIC)]
+    jobs += [dict(tag=f"tau{time:g}", course="tokyo_2021_men",
+                  profile="tt_specialist", fatigue=dict(fatigue_time=time))
+             for time in (6000.0, 3000.0, 1500.0)]
     _run_jobs(jobs, "fatigue", workers)
 
 

@@ -1,8 +1,8 @@
 """Stage 2 of the optimizer: polish a plan by direct transcription.
 
 The dynamic program can only pick powers and states from its grids. This
-stage removes that rounding. Speed, reserve, and power at every grid node
-become unknowns of one large sparse nonlinear program, the dynamics become
+stage removes that rounding. The state and power at every grid node become
+unknowns of one large sparse nonlinear program, the dynamics become
 constraints linking neighbouring nodes, and IPOPT solves it with exact
 derivatives from CasADi. It is a local method, which is why it starts from
 the dynamic program's globally chosen plan.
@@ -10,24 +10,33 @@ the dynamic program's globally chosen plan.
 Unknowns, for a grid of n steps:
 
     v_k    speed at node k                            k = 1..n
-    x_k    reserve deficit 1 - B_k / W' at node k     k = 1..n
-    r_k    power below CP on step k, as a share of CP k = 0..n-1
-    e_k    power above CP on step k, as a share of CP k = 0..n-1
+    x_k    deficit of the fast reserve at node k      k = 1..n
+    F_k    fatigue at node k                          k = 1..n
+    E_k    work done at node k                        k = 1..n
+    P_k    power on step k                            k = 0..n-1
+    e_k    power above critical power on step k       k = 0..n-1
 
-so that P_k = CP (1 - r_k + e_k). Splitting the power this way keeps the
-stamina law smooth: draining depends only on e and recovery only on r.
+Constraints, with CP_k and W'_k the critical power and reserve capacity
+that follow from F_k and E_k:
 
-Constraints:
-
-    v_{k+1}^3 <= v_k^3 advanced by RK4 at power P_k      (motion)
-    x_{k+1}    = recover(x_k, r_k, dt_k) + e_k CP dt_k / W'   (stamina)
+    v_{k+1}^3 <= v_k^3 advanced by RK4 at power P_k              (motion)
+    x_{k+1}    = recover(x_k, CP_k - P_k + e_k) + e_k dt_k / W'_k  (stamina)
+    F_{k+1}    = F_k + fatigue_rate(P_k) dt_k                    (fatigue)
+    E_{k+1}    = E_k + P_k dt_k                                  (work)
+    e_k       >= P_k - CP_k                                      (split)
     v_{k+1}   <= corner speed cap of step k
-    0 <= x_k <= 1,  0 <= r_k <= 1,  0 <= e_k <= P_max / CP - 1
+    0 <= x_k <= 1,  0 <= P_k <= P_max,  e_k >= 0
 
 The motion constraint is an inequality because the rider may brake: the gap
-between the two sides is the kinetic energy braked away. The transcription
-uses the same RK4 substeps, time rule, and stamina update as the simulator, so
-the plan is checked afterwards by simply simulating it.
+between the two sides is the kinetic energy braked away.
+
+The split keeps the stamina law smooth across P = CP. Draining depends only
+on e, and recovery only on the power below critical power, CP - P + e. At
+the optimum e is as small as allowed, e = max(P - CP, 0), which makes the
+two pieces the usual expenditure and recovery laws.
+
+The transcription uses the same RK4 substeps, time rule, and stamina update
+as the simulator, so the plan is checked afterwards by simply simulating it.
 """
 
 import dataclasses
@@ -64,10 +73,11 @@ class PolishResult:
 def supports(rider: rider_params.RiderParams) -> bool:
     """Tells whether the split-power formulation is exact for a rider.
 
-    With P = CP (1 - r + e) the program could in principle set r and e both
-    positive on one step. That never pays as long as a watt of recovery
-    returns at most a joule per second, i.e. alpha <= 1. For alpha > 1 the
-    program could manufacture reserve, so the stage is skipped.
+    The program could in principle set e above max(P - CP, 0), which drains
+    and recovers at the same time. That never pays as long as a watt of
+    recovery returns at most a joule per second, i.e. alpha <= 1. For
+    alpha > 1 the program could manufacture reserve, so the stage is
+    skipped.
 
     Args:
         rider: Rider parameters.
@@ -83,14 +93,26 @@ def _next_deficit(
     below: ca.SX,
     above: ca.SX,
     duration: ca.SX,
+    capacity: ca.SX,
     rider: rider_params.RiderParams,
 ) -> ca.SX:
-    """Advances the deficit x = 1 - B/W' over one step.
+    """Advances the deficit x over one step.
 
-    Mirrors `cp_model.step_reserve`: recovery follows the closed-form
+    Mirrors `cp_model.step_deficit`: recovery follows the closed-form
     solution of dx/dt = -k x^beta, and expenditure adds linearly.
+
+    Args:
+        deficit: Deficit at the start of the step [-].
+        below: Power below critical power [W].
+        above: Power above critical power [W].
+        duration: Duration of the step [s].
+        capacity: Size W' of the fast reserve on the step [J].
+        rider: Rider parameters.
+
+    Returns:
+        Deficit at the end of the step [-].
     """
-    rate = rider.alpha * rider.cp * below / rider.w_prime
+    rate = rider.alpha * below / capacity
     if rider.beta == 1.0:
         recovered = deficit * ca.exp(-rate * duration)
     else:
@@ -100,7 +122,7 @@ def _next_deficit(
         if exponent > 0:
             base = ca.fmax(base, 0.0)
         recovered = base ** (1.0 / exponent)
-    return recovered + rider.cp * above * duration / rider.w_prime
+    return recovered + above * duration / capacity
 
 
 def polish(
@@ -133,33 +155,39 @@ def polish(
         raise ValueError("The collocation stage needs alpha <= 1.")
     num_steps = grid.num_steps
     speed_floor = config.min_speed**3
-    # CP on each step; it differs between steps only when fatigue is on.
-    step_riders = [cp_model.at_step(rider, k) for k in range(num_steps)]
-    step_cp = np.array([r.cp for r in step_riders])
-    max_above = rider.p_max / step_cp - 1.0
-    # Typical size of v^3, to bring the motion constraints to order one.
+    # Scales that bring every unknown and constraint to order one.
+    power_scale = rider.lt2
     speed_scale = float(np.mean(start.speed)) ** 3
+    fatigue_scale = max(float(start.fatigue[-1]), 1.0)
+    work_scale = max(float(start.work[-1]), 1.0)
+    max_power = rider.p_max / power_scale
 
     def to_speed(speed_cubed: ca.SX) -> ca.SX:
         return ca.fmax(speed_cubed, speed_floor) ** (1.0 / 3.0)
 
     speed = ca.SX.sym("v", num_steps)
     deficit = ca.SX.sym("x", num_steps)
-    below = ca.SX.sym("r", num_steps)
+    fatigue = ca.SX.sym("f", num_steps)
+    work = ca.SX.sym("w", num_steps)
+    power = ca.SX.sym("p", num_steps)
     above = ca.SX.sym("e", num_steps)
 
     total_time = 0.0
-    motion = []
-    stamina = []
+    motion, stamina, tiring, working, split = [], [], [], [], []
     for k in range(num_steps):
         start_speed = grid.start_speed if k == 0 else speed[k - 1]
         start_deficit = 0.0 if k == 0 else deficit[k - 1]
-        power = step_cp[k] * (1.0 - below[k] + above[k])
+        start_fatigue = 0.0 if k == 0 else fatigue_scale * fatigue[k - 1]
+        start_work = 0.0 if k == 0 else work_scale * work[k - 1]
+        watts = power_scale * power[k]
+        watts_above = power_scale * above[k]
+        cp = cp_model.critical_power(start_fatigue, rider, ca.exp)
+        capacity = cp_model.reserve_capacity(start_work, rider, ca.exp)
+
         trajectory = simulate.free_trajectory(
-            start_speed**3, power, grid.theta[k], grid.headwind[k],
+            start_speed**3, watts, grid.theta[k], grid.headwind[k],
             grid.step, physics, to_speed,
         )
-        free_cubed = trajectory[-1]
         duration = simulate.step_duration(
             simulate.braked_speeds(
                 start_speed, trajectory, speed[k], to_speed
@@ -167,18 +195,28 @@ def polish(
             grid.step,
         )
         total_time += duration
-        motion.append((free_cubed - speed[k] ** 3) / speed_scale)
+        motion.append((trajectory[-1] - speed[k] ** 3) / speed_scale)
         stamina.append(
             deficit[k]
             - _next_deficit(
-                start_deficit, below[k], above[k], duration, step_riders[k]
+                start_deficit, cp - watts + watts_above, watts_above,
+                duration, capacity, rider,
             )
         )
+        tiring.append(
+            fatigue[k]
+            - (start_fatigue + cp_model.fatigue_rate(watts, rider) * duration)
+            / fatigue_scale
+        )
+        working.append(
+            work[k] - (start_work + watts * duration) / work_scale
+        )
+        split.append(above[k] - power[k] + cp / power_scale)
 
     problem = {
-        "x": ca.vertcat(speed, deficit, below, above),
+        "x": ca.vertcat(speed, deficit, fatigue, work, power, above),
         "f": total_time / start.total_time,
-        "g": ca.vertcat(*motion, *stamina),
+        "g": ca.vertcat(*motion, *split, *stamina, *tiring, *working),
     }
     solver = ca.nlpsol("pacing", "ipopt", problem, {
         "print_time": False,
@@ -193,34 +231,36 @@ def polish(
         },
     })
 
-    start_ratio = start.power / step_cp
+    zeros = np.zeros(num_steps)
+    ones = np.ones(num_steps)
+    infinite = np.full(num_steps, np.inf)
+    start_power = start.power / power_scale
+    start_cp = start.critical_power[:-1] / power_scale
     guess = np.concatenate([
         np.clip(start.speed[1:], config.min_speed, grid.speed_cap),
-        np.clip(1.0 - start.reserve[1:] / rider.w_prime, 0.0, 1.0),
-        np.clip(1.0 - start_ratio, 0.0, 1.0),
-        np.clip(start_ratio - 1.0, 0.0, max_above),
+        np.clip(start.deficit[1:], 0.0, 1.0),
+        start.fatigue[1:] / fatigue_scale,
+        start.work[1:] / work_scale,
+        np.clip(start_power, 0.0, max_power),
+        np.clip(start_power - start_cp, 0.0, max_power),
     ])
-    zeros = np.zeros(num_steps)
     solution = solver(
         x0=guess,
         lbx=np.concatenate(
-            [np.full(num_steps, config.min_speed), zeros, zeros, zeros]
+            [np.full(num_steps, config.min_speed), zeros, zeros, zeros,
+             zeros, zeros]
         ),
         ubx=np.concatenate([
-            grid.speed_cap,
-            np.ones(num_steps),
-            np.ones(num_steps),
-            max_above,
+            grid.speed_cap, ones, infinite, infinite,
+            np.full(num_steps, max_power), np.full(num_steps, max_power),
         ]),
-        lbg=np.zeros(2 * num_steps),
-        ubg=np.concatenate([np.full(num_steps, np.inf), zeros]),
+        lbg=np.zeros(5 * num_steps),
+        ubg=np.concatenate([infinite, infinite, zeros, zeros, zeros]),
     )
 
     values = np.asarray(solution["x"]).ravel()
-    below_value = values[2 * num_steps:3 * num_steps]
-    above_value = values[3 * num_steps:]
     plan = np.clip(
-        step_cp * (1.0 - below_value + above_value), 0.0, rider.p_max
+        power_scale * values[4 * num_steps:5 * num_steps], 0.0, rider.p_max
     )
     stats = solver.stats()
     return PolishResult(

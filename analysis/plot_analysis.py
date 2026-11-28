@@ -19,6 +19,7 @@ matplotlib.use("Agg")
 from matplotlib import pyplot as plt  # pylint: disable=wrong-import-position
 
 from course_loader import gpx  # pylint: disable=wrong-import-position
+from power_model import cp_model  # pylint: disable=wrong-import-position
 from profiles import rider as rider_profiles  # pylint: disable=wrong-import-position
 
 DATA = ROOT / "outputs" / "analysis"
@@ -40,7 +41,7 @@ def power_curves():
     for color, name in zip(PALETTE, ("tt_specialist", "climber",
                                      "tt_specialist_women", "climber_women")):
         p = rider_profiles.load(name)
-        ax.plot(t / 60, np.minimum(p.cp + p.w_prime / t, p.p_max),
+        ax.plot(t / 60, cp_model.power_duration_curve(t, p.rider_params()),
                 color=color, label=p.name)
         ax.axhline(p.cp, color=color, ls=":", lw=0.8)
     ax.set_xscale("log")
@@ -95,7 +96,10 @@ def plan(tag, course_name, title, cp):
     ax[0].set_ylabel("Elevation (m)")
     ax[1].step(km[:-1], d["power"], where="post", color=BLUE, lw=0.9, label="Optimal")
     ax[1].step(km[:-1], d["c_power"], where="post", color=GREY, lw=1.2, label="Constant")
-    ax[1].axhline(cp, ls=":", color="k", lw=0.8)
+    if "cp" in d:
+        ax[1].plot(km, d["cp"], ls=":", color="k", lw=0.8)
+    else:
+        ax[1].axhline(cp, ls=":", color="k", lw=0.8)
     ax[1].set_ylabel("Power (W)")
     ax[1].legend(fontsize=7, loc="upper right")
     ax[2].plot(km, d["speed"] * 3.6, color=BLUE, lw=0.9)

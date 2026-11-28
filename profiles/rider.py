@@ -1,7 +1,7 @@
 """Loads rider profiles from JSON into a Python class.
 
 A profile is everything that belongs to one rider and their bike: masses,
-drag area, rolling resistance, and the Critical Power parameters. The
+drag area, rolling resistance, and the stamina parameters. The
 physics and power models keep their own parameter classes, and a profile
 fills them in:
 
@@ -31,14 +31,23 @@ _TOP_LEVEL_KEYS = {
     "crr": "crr",
 }
 _POWER_KEYS = {
-    "cp_w": "cp",
+    "lt1_w": "lt1",
+    "lt2_w": "lt2",
     "w_prime_j": "w_prime",
     "p_max_w": "p_max",
     "recovery_alpha": "alpha",
     "recovery_beta": "beta",
+    "fatigue_exponent": "fatigue_exponent",
+    "fatigue_time_s": "fatigue_time",
+    "w_prime_work_scale_j_per_kg": "work_scale",
+    "best_efforts": "best_efforts",
 }
-_OPTIONAL_FIELDS = ("description", "alpha", "beta")
-_TEXT_FIELDS = ("name", "description")
+_OPTIONAL_FIELDS = (
+    "description", "alpha", "beta", "fatigue_exponent", "fatigue_time",
+    "work_scale", "best_efforts",
+)
+# Fields that are not single positive numbers.
+_UNCHECKED_FIELDS = ("name", "description", "best_efforts")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -51,11 +60,21 @@ class RiderProfile:
         bike_mass: Mass of the bike and all equipment [kg].
         cda: Drag area C_d A in the rider's race position [m^2].
         crr: Rolling resistance coefficient of the tyres [-].
-        cp: Critical power CP [W].
-        w_prime: Anaerobic work capacity above CP, W' [J].
+        lt1: First lactate threshold, LT1 [W].
+        lt2: Second lactate threshold, LT2 [W], taken as the critical power
+            of the fresh rider.
+        w_prime: Work capacity above critical power when fresh, W'_0 [J].
         p_max: Hard cap on instantaneous power [W].
         alpha: Recovery rate coefficient [-].
         beta: Recovery saturation exponent [-].
+        fatigue_exponent: How steeply fatigue grows with intensity [-].
+        fatigue_time: Fatigue at which critical power has lost 63% of the
+            span between LT2 and LT1 [s].
+        work_scale: Work done per kilogram of body mass at which W' has
+            fallen to 37% of its fresh value [J/kg].
+        best_efforts: Measured best efforts the power numbers were fitted
+            to, as (duration [s], power [W]) pairs. Kept for reference and
+            for checking the fit; the model does not read them.
         description: One line on what kind of rider this is.
     """
 
@@ -64,25 +83,35 @@ class RiderProfile:
     bike_mass: float
     cda: float
     crr: float
-    cp: float
+    lt1: float
+    lt2: float
     w_prime: float
     p_max: float
     alpha: float = 1.0
     beta: float = 1.0
+    fatigue_exponent: float = 1.7
+    fatigue_time: float = 3000.0
+    work_scale: float = 57_400.0
+    best_efforts: tuple[tuple[float, float], ...] = ()
     description: str = ""
 
     def __post_init__(self):
         for field in dataclasses.fields(self):
             value = getattr(self, field.name)
-            if field.name not in _TEXT_FIELDS and value <= 0:
+            if field.name not in _UNCHECKED_FIELDS and value <= 0:
                 raise ValueError(f"{field.name} must be positive: {value}.")
-        if self.p_max < self.cp:
-            raise ValueError("p_max must be at least cp.")
+        if not self.lt1 < self.lt2 <= self.p_max:
+            raise ValueError("Need lt1 < lt2 <= p_max.")
 
     @property
     def total_mass(self) -> float:
         """Combined mass of rider and bike, m [kg]."""
         return self.rider_mass + self.bike_mass
+
+    @property
+    def cp(self) -> float:
+        """Critical power of the fresh rider, CP_0 = LT2 [W]."""
+        return self.lt2
 
     @property
     def cp_per_kg(self) -> float:
@@ -107,13 +136,17 @@ class RiderProfile:
         )
 
     def rider_params(self) -> rider_params.RiderParams:
-        """Builds the Critical Power parameters for this rider."""
+        """Builds the stamina parameters for this rider."""
         return rider_params.RiderParams(
-            cp=self.cp,
+            lt1=self.lt1,
+            lt2=self.lt2,
             w_prime=self.w_prime,
             p_max=self.p_max,
             alpha=self.alpha,
             beta=self.beta,
+            fatigue_exponent=self.fatigue_exponent,
+            fatigue_time=self.fatigue_time,
+            work_capacity=self.work_scale * self.rider_mass,
         )
 
 
@@ -155,6 +188,11 @@ def load(name_or_path: str | pathlib.Path) -> RiderProfile:
     power = data.pop("power", {})
     fields = _rename(data, _TOP_LEVEL_KEYS, path.name)
     fields.update(_rename(power, _POWER_KEYS, f"{path.name} 'power'"))
+    if "best_efforts" in fields:
+        fields["best_efforts"] = tuple(
+            (float(duration), float(watts))
+            for duration, watts in fields["best_efforts"]
+        )
 
     required = {
         field.name for field in dataclasses.fields(RiderProfile)

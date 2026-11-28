@@ -5,7 +5,10 @@ import pathlib
 import tempfile
 import unittest
 
+import numpy as np
+
 from physics_model import params as physics_params
+from power_model import calibrate
 from profiles import rider
 
 
@@ -73,6 +76,17 @@ class RiderProfileTest(unittest.TestCase):
             path.write_text(json.dumps(negative))
             with self.assertRaises(ValueError):
                 rider.load(path)
+
+    def test_profiles_reproduce_the_efforts_they_were_fitted_to(self):
+        for name in rider.available():
+            with self.subTest(profile=name):
+                profile = rider.load(name)
+                self.assertEqual(len(profile.best_efforts), 3)
+                errors = calibrate.fit_errors(
+                    profile.rider_params(), profile.best_efforts
+                )
+                powers = np.array([watts for _, watts in profile.best_efforts])
+                self.assertLess(np.abs(errors / powers).max(), 0.01)
 
     def test_unknown_profile_name(self):
         with self.assertRaises(FileNotFoundError):

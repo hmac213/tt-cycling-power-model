@@ -7,7 +7,7 @@ code does and where.
 | --- | --- | --- | --- |
 | 1 | Rider types | Time trial specialist and climber, each in a men's and a women's version | `profiles/` |
 | 2 | Max power | 2-parameter CP model + a constraint P ≤ P_max | `RiderParams.p_max`, solver bounds |
-| 3 | Recovery model | W′ balance ODE (Skiba et al. 2015): dB/dt = (1 − B/W′)(CP − P) below CP | `power_model/cp_model.py` (α = β = 1) |
+| 3 | Recovery model | W′ balance ODE (Skiba et al. 2015): dB/dt = (1 − B/W′)(CP − P) below CP, with CP and W′ the rider's current values (see no. 12) | `power_model/cp_model.py` (α = β = 1) |
 | 4 | Notation | **B** is the remaining W′ reserve (W′_bal in Skiba's papers). CP, s, t in seconds, P everywhere. | everywhere |
 | 5 | Drivetrain efficiency | Keep η as a parameter, **η = 0.977** (a 2.3% chain loss), from Martin et al. (1998). P is the rider's pedal power; η P reaches the wheel. | `PhysicsParams.drivetrain_efficiency`, `--efficiency` |
 | 6 | Wheel rotational inertia | Fold into an effective mass m_eff = m + I/r², with **I = 0.14 kg·m²** (both wheels) and **r = 0.311 m**, from Martin et al. (1998); adds 1.45 kg | `PhysicsParams.wheel_inertia`, `wheel_radius`, `effective_mass` |
@@ -16,10 +16,10 @@ code does and where.
 | 9 | "Sharp turn" | Turn radius **below 40 m** (with μ = 0.5 that caps speed at about 50 km/h) | course design and description |
 | 10 | "Nontrivial grade" | **At least 4% sustained over at least 500 m** | course design and description |
 | 11 | Grip μ and braking deceleration | μ = 0.5 and a_brake = 3 m/s² are placeholders, to be sourced or varied in a sensitivity analysis | `PhysicsParams.mu_corner`, `brake_decel` |
-| 12 | Races longer than the CP model's range | CP is validated for about 2–30 min; the men's races take 50–60 min. Optional long-race fatigue, CP(t) = CP(1 − k ln(t/t₀)) after t₀ = 30 min, with k swept from 0 to 0.14 | `RiderParams.fatigue_rate`, `solver/optimize.py` |
-| 13 | Women's profiles | Same model; only CP, W′, mass, C_dA and P_max change | `profiles/*.json` |
+| 12 | Races longer than the CP model's range | CP is validated for about 2–30 min; the men's races take 50–60 min. The stamina model therefore has two reserves. Fatigue F builds with intensity between LT1 and LT2, dF/dt = max(i, 0)^γ, and never recovers; critical power sinks from LT2 towards LT1 as CP = LT1 + (LT2 − LT1) exp(−(F/τ_F)²); W′ shrinks with total work, W′ = W′₀ exp(−E/E_W). γ = 1.7, τ_F = 3000 s, E_W = 57.4 kJ/kg from Clark et al. (2019) and Mateo-March et al. (2024). This replaces the earlier optional time-based decline CP(t) = CP(1 − k ln(t/t₀)), whose k was never fitted. | `power_model/`, [power_model/README.md](power_model/README.md) |
+| 13 | Women's profiles | Same model; only LT1, LT2, W′, mass, C_dA and P_max change | `profiles/*.json` |
 | 14 | Start | Standing start, v₀ = 0 | `SimConfig.initial_speed` |
-| 15 | Profile values | Four profiles built from published data on professional riders (Valenzuela 2022, Mateo-March 2022, Ebert 2005, Garcia-Lopez 2014, Defraeye 2010, Padilla 1999) | `profiles/`, `profiles/SOURCES.md` |
+| 15 | Profile values | Four profiles built from published data on professional riders (Valenzuela 2022, Mateo-March 2022, Ebert 2005, Garcia-Lopez 2014, Defraeye 2010, Padilla 1999). LT2 and W′ are fitted through the stamina model to the 5–20 min powers; LT1 is assumed to be 75% of LT2. | `profiles/`, `profiles/SOURCES.md` |
 | 16 | Women's climber | **Follow the data**: women's time trialists have higher power per kilogram over 10–60 min (Mateo-March et al. 2022), so the climber uses the P50 row: CP = 255 W, W′ = 16.1 kJ. Report it as a finding. | `profiles/climber_women.json` |
 | 17 | Time trialists' C_dA | **0.211 m²** for men (wind tunnel, time-trial position, Defraeye et al. 2010), scaled by frontal area to **0.188 m²** for women. Climbers keep the frontal-area scaling of the professional value 0.237 m² (Garcia-Lopez et al. 2014), i.e. a less optimised position. | `cda_m2` in the profiles |
 | 18 | Courses | Each rider rides the route of their own race: Tokyo men 2 laps (43.9 km) and women 1 lap (22.0 km); Flanders men 43.8 km and women 30.3 km. Map-derived elevation, loaded with `sigma_ele = 1` m. | `courses/`, `courses/README.md` |
@@ -60,3 +60,5 @@ d(v³)/ds = (3 / m_eff)(η P − v F_res).
   (2015). Intramuscular determinants of the ability to recover work capacity
   above critical power. *European Journal of Applied Physiology*.
 - Rider profile sources: [profiles/SOURCES.md](profiles/SOURCES.md).
+- Every source, with what was taken from it and where it is used:
+  [SOURCES.md](SOURCES.md).

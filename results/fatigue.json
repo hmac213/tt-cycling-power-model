@@ -1,79 +1,79 @@
 [
  {
-  "tag": "k0",
-  "course": "tokyo_2021_men",
-  "profile": "tt_specialist",
-  "fatigue": null,
-  "polish": true,
-  "length_km": 43.930435532378624,
-  "climb_m": 747.2545635696761,
-  "constant_time": 3697.077430143989,
-  "constant_power": 408.6013885791836,
-  "optimal_time": 3484.1937543366103,
-  "saved": 212.88367580737895,
-  "optimal_avg_power": 388.3161930949973,
-  "brake_constant_kj": 241.72197092190626,
-  "brake_optimal_kj": 107.88321907417642,
-  "polished": true
- },
- {
-  "tag": "k0.035",
+  "tag": "classic",
   "course": "tokyo_2021_men",
   "profile": "tt_specialist",
   "fatigue": {
-   "fatigue_rate": 0.035,
-   "fatigue_onset": 1800.0
+   "fatigue_time": 1000000000.0,
+   "work_capacity": 1000000000000000.0
   },
   "polish": true,
-  "length_km": 43.930435532378624,
-  "climb_m": 747.2545635696761,
-  "constant_time": 3709.505131115987,
-  "constant_power": 405.6558449842168,
-  "optimal_time": 3493.8886840775795,
-  "saved": 215.6164470384074,
-  "optimal_avg_power": 385.8316375057202,
-  "brake_constant_kj": 240.1084231459092,
-  "brake_optimal_kj": 107.563732673355,
+  "length_km": 43.930435532378674,
+  "climb_m": 747.2545635696757,
+  "constant_time": 3650.9640992132754,
+  "constant_power": 419.8746323421638,
+  "optimal_time": 3450.8783454246286,
+  "saved": 200.0857537886468,
+  "optimal_avg_power": 398.19512880853307,
+  "brake_constant_kj": 247.87926158252813,
+  "brake_optimal_kj": 99.25553849653495,
   "polished": true
  },
  {
-  "tag": "k0.07",
+  "tag": "tau6000",
   "course": "tokyo_2021_men",
   "profile": "tt_specialist",
   "fatigue": {
-   "fatigue_rate": 0.07,
-   "fatigue_onset": 1800.0
+   "fatigue_time": 6000.0
   },
   "polish": true,
-  "length_km": 43.930435532378624,
-  "climb_m": 747.2545635696761,
-  "constant_time": 3722.3207624087254,
-  "constant_power": 402.661034768099,
-  "optimal_time": 3503.9527999511397,
-  "saved": 218.3679624575857,
-  "optimal_avg_power": 383.3062697147341,
-  "brake_constant_kj": 238.48354744357343,
-  "brake_optimal_kj": 107.3242629761642,
-  "polished": true
+  "length_km": 43.930435532378674,
+  "climb_m": 747.2545635696757,
+  "constant_time": 3706.7270924664945,
+  "constant_power": 406.310965455794,
+  "optimal_time": 3562.509646861813,
+  "saved": 144.21744560468142,
+  "optimal_avg_power": 378.95595263782116,
+  "brake_constant_kj": 240.46750345493837,
+  "brake_optimal_kj": 124.47677118459067,
+  "polished": false
  },
  {
-  "tag": "k0.14",
+  "tag": "tau3000",
   "course": "tokyo_2021_men",
   "profile": "tt_specialist",
   "fatigue": {
-   "fatigue_rate": 0.14,
-   "fatigue_onset": 1800.0
+   "fatigue_time": 3000.0
   },
   "polish": true,
-  "length_km": 43.930435532378624,
-  "climb_m": 747.2545635696761,
-  "constant_time": 3767.2662463274464,
-  "constant_power": 392.4830986955148,
-  "optimal_time": 3525.175213975502,
-  "saved": 242.09103235194425,
-  "optimal_avg_power": 378.1507209844614,
-  "brake_constant_kj": 233.03440511352906,
-  "brake_optimal_kj": 106.86640775522571,
+  "length_km": 43.930435532378674,
+  "climb_m": 747.2545635696757,
+  "constant_time": 3781.3456359174675,
+  "constant_power": 389.39397482763064,
+  "optimal_time": 3650.8527933255577,
+  "saved": 130.49284259190972,
+  "optimal_avg_power": 362.2156952969571,
+  "brake_constant_kj": 231.4061457252177,
+  "brake_optimal_kj": 128.46693340918006,
+  "polished": false
+ },
+ {
+  "tag": "tau1500",
+  "course": "tokyo_2021_men",
+  "profile": "tt_specialist",
+  "fatigue": {
+   "fatigue_time": 1500.0
+  },
+  "polish": true,
+  "length_km": 43.930435532378674,
+  "climb_m": 747.2545635696757,
+  "constant_time": 3869.713705447425,
+  "constant_power": 370.9952276111166,
+  "optimal_time": 3755.2244694348246,
+  "saved": 114.48923601260049,
+  "optimal_avg_power": 344.0190451130955,
+  "brake_constant_kj": 221.81174474519642,
+  "brake_optimal_kj": 128.77225614508168,
   "polished": true
  }
 ]
